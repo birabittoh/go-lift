@@ -1,211 +1,126 @@
-// Models for Go-Lift app that match the backend models
-
-// Equipment model
-export interface Equipment {
+export interface User {
   id?: number;
   name: string;
-  description: string;
+  isFemale: boolean;
+  height?: number; // In cm
+  weight?: number; // In kg
+  birthDate?: string;
   createdAt?: string;
   updatedAt?: string;
-  deletedAt?: string | null;
-  exercises?: Exercise[]; // Many-to-many relationship
 }
 
-// Muscle Group model
-export interface MuscleGroup {
-  id?: number;
+export interface Muscle {
+  id: number;
   name: string;
-  createdAt?: string;
-  updatedAt?: string;
-  deletedAt?: string | null;
-  exercises?: Exercise[]; // Many-to-many relationship
+  createdAt: string;
+  updatedAt: string;
 }
 
-// ExerciseMuscleGroup join table
-export interface ExerciseMuscleGroup {
-  id?: number;
-  exerciseId: number;
-  muscleGroupId: number;
-  exercise?: Exercise;
-  muscleGroup?: MuscleGroup;
+export interface Exercise {
+  id: number;
+  name: string;
+  level: string;
+  category: string;
+  force?: string;
+  mechanic?: string;
+  equipment?: string;
+  instructions?: string;
+  primaryMuscles: Muscle[];
+  secondaryMuscles: Muscle[];
+  createdAt: string;
+  updatedAt: string;
 }
 
-// Set definition for an exercise
 export interface Set {
-  id?: number;
-  exerciseId: number;
+  id: number;
+  exerciseItemId: number;
   reps: number;
   weight: number;
-  duration: number; // In seconds, for timed exercises
+  duration: number; // In seconds
   orderIndex: number;
-  createdAt?: string;
-  updatedAt?: string;
-  deletedAt?: string | null;
-  exercise?: Exercise; // Excluded in JSON via json:"-" but useful for frontend
+  createdAt: string;
+  updatedAt: string;
 }
 
-// Exercise definition
-export interface Exercise {
-  id?: number;
-  name: string;
-  description: string;
-  createdAt?: string;
-  updatedAt?: string;
-  deletedAt?: string | null;
-  equipment: Equipment[];
-  muscleGroups: MuscleGroup[];
-  sets?: Set[];
-}
-
-// SuperSet to handle two exercises with single rest time
-export interface SuperSet {
-  id?: number;
-  name: string;
-  primaryExerciseId: number;
-  secondaryExerciseId: number;
-  restTime: number; // In seconds
-  createdAt?: string;
-  updatedAt?: string;
-  deletedAt?: string | null;
-  primaryExercise: Exercise;
-  secondaryExercise: Exercise;
-}
-
-// RoutineItem represents either an Exercise or a SuperSet in a Routine
-export interface RoutineItem {
-  id?: number;
-  routineId: number;
-  exerciseId?: number | null;
-  superSetId?: number | null;
-  restTime: number; // In seconds
-  orderIndex: number;
-  createdAt?: string;
-  updatedAt?: string;
-  deletedAt?: string | null;
-  superSet?: SuperSet | null;
-  exercise?: Exercise | null;
-}
-
-// A collection of exercises and/or supersets that make up a workout routine
-export interface Routine {
-  id?: number;
-  name: string;
-  description: string;
-  createdAt?: string;
-  updatedAt?: string;
-  deletedAt?: string | null;
-  routineItems: RoutineItem[];
-}
-
-// RecordRoutine represents a completed workout session
-export interface RecordRoutine {
-  id?: number;
-  routineId: number;
-  startedAt: string;
-  endedAt?: string | null;
-  createdAt?: string;
-  updatedAt?: string;
-  deletedAt?: string | null;
-  routine: Routine;
-  recordRoutineItems: RecordRoutineItem[];
-}
-
-// RecordRoutineItem represents either a RecordExercise or a RecordSuperSet in a completed routine
-export interface RecordRoutineItem {
-  id?: number;
-  recordRoutineId: number;
-  recordExerciseId?: number | null;
-  recordSuperSetId?: number | null;
-  actualRestTime: number; // In seconds
-  orderIndex: number;
-  createdAt?: string;
-  updatedAt?: string;
-  deletedAt?: string | null;
-  recordSuperSet?: RecordSuperSet | null;
-  recordExercise?: RecordExercise | null;
-}
-
-// RecordSuperSet records a completed superset
-export interface RecordSuperSet {
-  id?: number;
-  recordRoutineId: number;
-  superSetId: number;
-  startedAt: string;
-  endedAt: string;
-  actualRestTime: number; // In seconds
-  orderIndex: number;
-  createdAt?: string;
-  updatedAt?: string;
-  deletedAt?: string | null;
-  superSet: SuperSet;
-}
-
-// RecordExercise tracks a completed exercise
-export interface RecordExercise {
-  id?: number;
-  recordRoutineId: number;
+export interface ExerciseItem {
+  id: number;
+  routineItemId: number;
   exerciseId: number;
-  startedAt: string;
-  endedAt: string;
-  actualRestTime: number; // In seconds
   orderIndex: number;
-  recordSuperSetId?: number | null;
-  createdAt?: string;
-  updatedAt?: string;
-  deletedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
   exercise: Exercise;
-  recordSets: RecordSet[];
+  sets: Set[];
 }
 
-// RecordSet tracks an individual completed set
+export interface RoutineItem {
+  id: number;
+  routineId: number;
+  type: string; // "exercise" or "superset"
+  restTime: number; // In seconds
+  orderIndex: number;
+  createdAt: string;
+  updatedAt: string;
+  exerciseItems: ExerciseItem[];
+}
+
+export interface Routine {
+  id: number;
+  name: string;
+  description: string;
+  createdAt: string;
+  updatedAt: string;
+  items: RoutineItem[];
+}
+
 export interface RecordSet {
-  id?: number;
-  recordExerciseId: number;
+  id: number;
+  recordExerciseItemId: number;
   setId: number;
   actualReps: number;
   actualWeight: number;
   actualDuration: number; // In seconds
   completedAt: string;
   orderIndex: number;
-  createdAt?: string;
-  updatedAt?: string;
-  deletedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
   set: Set;
 }
 
-// Additional models for localization
-export interface Localization {
-  id?: number;
-  languageId: number;
-  keyword: string;
-  text: string;
-  createdAt?: string;
-  updatedAt?: string;
-  deletedAt?: string | null;
+export interface RecordExerciseItem {
+  id: number;
+  recordItemId: number;
+  exerciseItemId: number;
+  orderIndex: number;
+  createdAt: string;
+  updatedAt: string;
+  exerciseItem: ExerciseItem;
+  recordSets: RecordSet[];
 }
 
-export interface Language {
-  id?: number;
-  name: string;
-  code: string;
-  flag: string;
-  createdAt?: string;
-  updatedAt?: string;
-  deletedAt?: string | null;
+export interface RecordItem {
+  id: number;
+  recordRoutineId: number;
+  routineItemId: number;
+  duration?: number; // In seconds
+  actualRestTime?: number; // In seconds
+  orderIndex: number;
+  createdAt: string;
+  updatedAt: string;
+  routineItem: RoutineItem;
+  recordExerciseItems: RecordExerciseItem[];
 }
 
-export interface User {
-  id?: number;
-  name: string;
-  isFemale: string | boolean;
-  weight: string | number; // in kg
-  height: string | number; // in cm
-  birthDate: string; // ISO format date string
-  createdAt?: string;
-  updatedAt?: string;
+export interface RecordRoutine {
+  id: number;
+  routineId: number;
+  duration?: number; // In seconds
+  createdAt: string;
+  updatedAt: string;
+  routine: Routine;
+  recordItems: RecordItem[];
 }
 
-// Stats for the home page
 export interface WorkoutStats {
   totalWorkouts: number;
   totalMinutes: number;
@@ -219,28 +134,4 @@ export interface WorkoutStats {
     count: number;
   };
   recentWorkouts: RecordRoutine[];
-}
-
-// Some simpler interfaces for UI use when full objects are too complex
-export interface ExerciseSimple {
-  id?: number;
-  name: string;
-  muscleGroups: string[];
-  equipment: string[];
-}
-
-export interface SetForUI {
-  id?: number;
-  reps: number;
-  weight: number;
-  duration?: number;
-  completed: boolean;
-}
-
-export interface ExerciseForWorkout {
-  id?: number;
-  exerciseId: number;
-  exercise?: Exercise;
-  sets: SetForUI[];
-  notes?: string;
 }

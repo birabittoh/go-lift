@@ -145,7 +145,7 @@ const ProfilePage = () => {
               min="20"
               max="300"
               step="1"
-              value={formData.weight}
+              value={formData.weight ?? 0}
               onChange={handleInputChange}
               disabled={!isEditing}
               required
@@ -158,10 +158,10 @@ const ProfilePage = () => {
               type="number"
               id="height"
               name="height"
-              min="30"
+              min="0"
               max="300"
               step="1"
-              value={formData.height}
+              value={formData.height ?? 0}
               onChange={handleInputChange}
               disabled={!isEditing}
               required
@@ -174,7 +174,7 @@ const ProfilePage = () => {
               type="date"
               id="birthDate"
               name="birthDate"
-              value={parseBirthDate(formData.birthDate)}
+              value={parseBirthDate(formData.birthDate ?? '')}
               onChange={handleInputChange}
               disabled={!isEditing}
               required

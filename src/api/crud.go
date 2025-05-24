@@ -2,107 +2,169 @@ package api
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/birabittoh/go-lift/src/database"
 	"gorm.io/gorm"
 )
 
-type WorkoutStats struct {
-	TotalWorkouts        int64 `json:"totalWorkouts"`
-	TotalMinutes         int   `json:"totalMinutes"`
-	TotalExercises       int64 `json:"totalExercises"`
-	MostFrequentExercise *struct {
-		Name  string `json:"name"`
-		Count int    `json:"count"`
-	} `json:"mostFrequentExercise,omitempty"`
-	MostFrequentRoutine *struct {
-		Name  string `json:"name"`
-		Count int    `json:"count"`
-	} `json:"mostFrequentRoutine,omitempty"`
-	RecentWorkouts []database.RecordRoutine `json:"recentWorkouts"`
-}
-
 // User handlers
 func getUserHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		id := r.PathValue("id")
+		id, err := getIDFromPath(r)
+		if err != nil {
+			jsonError(w, http.StatusBadRequest, "Invalid user ID")
+			return
+		}
+
 		var user database.User
 		if err := db.First(&user, id).Error; err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
+			if err == gorm.ErrRecordNotFound {
 				jsonError(w, http.StatusNotFound, "User not found")
 				return
 			}
-			jsonError(w, http.StatusInternalServerError, "Failed to fetch user: "+err.Error())
+			jsonError(w, http.StatusInternalServerError, "Database error")
 			return
 		}
+
 		jsonResponse(w, http.StatusOK, user)
 	}
 }
 
 func updateUserHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		id := r.PathValue("id")
-		var user database.User
-		if err := db.First(&user, id).Error; err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				jsonError(w, http.StatusNotFound, "User not found")
-				return
-			}
-			jsonError(w, http.StatusInternalServerError, "Failed to fetch user: "+err.Error())
+		id, err := getIDFromPath(r)
+		if err != nil {
+			jsonError(w, http.StatusBadRequest, "Invalid user ID")
 			return
 		}
 
-		if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-			jsonError(w, http.StatusBadRequest, "Invalid request body: "+err.Error())
+		var user database.User
+		if err := db.First(&user, id).Error; err != nil {
+			if err == gorm.ErrRecordNotFound {
+				jsonError(w, http.StatusNotFound, "User not found")
+				return
+			}
+			jsonError(w, http.StatusInternalServerError, "Database error")
 			return
 		}
+
+		var updateData database.User
+		if err := json.NewDecoder(r.Body).Decode(&updateData); err != nil {
+			jsonError(w, http.StatusBadRequest, "Invalid JSON")
+			return
+		}
+
+		// Update specific fields
+		user.Name = updateData.Name
+		user.IsFemale = updateData.IsFemale
+		user.Height = updateData.Height
+		user.Weight = updateData.Weight
+		user.BirthDate = updateData.BirthDate
+
 		if err := db.Save(&user).Error; err != nil {
-			jsonError(w, http.StatusInternalServerError, "Failed to update user: "+err.Error())
+			jsonError(w, http.StatusInternalServerError, "Failed to update user")
 			return
 		}
+
 		jsonResponse(w, http.StatusOK, user)
 	}
 }
 
-// Routines handlers
+// Exercise handlers (read-only)
+func getExercisesHandler(db *gorm.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var exercises []database.Exercise
+		query := db.Preload("PrimaryMuscles").Preload("SecondaryMuscles")
+
+		// Optional filtering
+		if category := r.URL.Query().Get("category"); category != "" {
+			query = query.Where("category = ?", category)
+		}
+		if level := r.URL.Query().Get("level"); level != "" {
+			query = query.Where("level = ?", level)
+		}
+
+		if err := query.Find(&exercises).Error; err != nil {
+			jsonError(w, http.StatusInternalServerError, "Database error")
+			return
+		}
+
+		jsonResponse(w, http.StatusOK, exercises)
+	}
+}
+
+func getExerciseHandler(db *gorm.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id, err := getIDFromPath(r)
+		if err != nil {
+			jsonError(w, http.StatusBadRequest, "Invalid exercise ID")
+			return
+		}
+
+		var exercise database.Exercise
+		if err := db.Preload("PrimaryMuscles").Preload("SecondaryMuscles").First(&exercise, id).Error; err != nil {
+			if err == gorm.ErrRecordNotFound {
+				jsonError(w, http.StatusNotFound, "Exercise not found")
+				return
+			}
+			jsonError(w, http.StatusInternalServerError, "Database error")
+			return
+		}
+
+		jsonResponse(w, http.StatusOK, exercise)
+	}
+}
+
+// Muscle handlers (read-only)
+func getMusclesHandler(db *gorm.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var muscles []database.Muscle
+		if err := db.Find(&muscles).Error; err != nil {
+			jsonError(w, http.StatusInternalServerError, "Database error")
+			return
+		}
+
+		jsonResponse(w, http.StatusOK, muscles)
+	}
+}
+
+// Routine handlers
 func getRoutinesHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var routines []database.Routine
-		result := db.
-			Preload("RoutineItems").
-			Preload("RoutineItems.Exercises").
-			Preload("RoutineItems.Supersets").
-			Preload("RoutineItems.Supersets.PrimaryExercise").
-			Preload("RoutineItems.Supersets.SecondaryExercise").
-			Find(&routines)
-		if result.Error != nil {
-			jsonError(w, http.StatusInternalServerError, "Failed to fetch routines: "+result.Error.Error())
+		if err := db.Find(&routines).Error; err != nil {
+			jsonError(w, http.StatusInternalServerError, "Database error")
 			return
 		}
+
 		jsonResponse(w, http.StatusOK, routines)
 	}
 }
 
 func getRoutineHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		id := r.PathValue("id")
+		id, err := getIDFromPath(r)
+		if err != nil {
+			jsonError(w, http.StatusBadRequest, "Invalid routine ID")
+			return
+		}
+
 		var routine database.Routine
-		result := db.
-			Preload("RoutineItems.Exercises").
-			Preload("RoutineItems.Supersets").
-			Preload("RoutineItems.Supersets.PrimaryExercise").
-			Preload("RoutineItems.Supersets.SecondaryExercise").
-			First(&routine, id)
-		if result.Error != nil {
-			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		if err := db.Preload("Items.ExerciseItems.Exercise.PrimaryMuscles").
+			Preload("Items.ExerciseItems.Exercise.SecondaryMuscles").
+			Preload("Items.ExerciseItems.Sets").
+			Order("Items.order_index, Items.ExerciseItems.order_index, Items.ExerciseItems.Sets.order_index").
+			First(&routine, id).Error; err != nil {
+			if err == gorm.ErrRecordNotFound {
 				jsonError(w, http.StatusNotFound, "Routine not found")
 				return
 			}
-			jsonError(w, http.StatusInternalServerError, "Failed to fetch routine: "+result.Error.Error())
+			jsonError(w, http.StatusInternalServerError, "Database error")
 			return
 		}
+
 		jsonResponse(w, http.StatusOK, routine)
 	}
 }
@@ -111,17 +173,14 @@ func createRoutineHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var routine database.Routine
 		if err := json.NewDecoder(r.Body).Decode(&routine); err != nil {
-			jsonError(w, http.StatusBadRequest, "Invalid request body: "+err.Error())
+			jsonError(w, http.StatusBadRequest, "Invalid JSON")
 			return
 		}
 
 		if err := db.Create(&routine).Error; err != nil {
-			jsonError(w, http.StatusInternalServerError, "Failed to create routine: "+err.Error())
+			jsonError(w, http.StatusInternalServerError, "Failed to create routine")
 			return
 		}
-
-		// Reload with associations
-		db.Preload("Exercises").Preload("Supersets").Preload("Supersets.Sets").First(&routine, routine.ID)
 
 		jsonResponse(w, http.StatusCreated, routine)
 	}
@@ -129,171 +188,91 @@ func createRoutineHandler(db *gorm.DB) http.HandlerFunc {
 
 func updateRoutineHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		id := r.PathValue("id")
+		id, err := getIDFromPath(r)
+		if err != nil {
+			jsonError(w, http.StatusBadRequest, "Invalid routine ID")
+			return
+		}
+
 		var routine database.Routine
-
-		// Check if exists
-		if err := db.First(&routine, id).Error; err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				jsonError(w, http.StatusNotFound, "Routine not found")
-				return
-			}
-			jsonError(w, http.StatusInternalServerError, "Database error: "+err.Error())
-			return
-		}
-
-		// Parse update data
 		if err := json.NewDecoder(r.Body).Decode(&routine); err != nil {
-			jsonError(w, http.StatusBadRequest, "Invalid request body: "+err.Error())
+			jsonError(w, http.StatusBadRequest, "Invalid JSON")
 			return
 		}
 
-		// Save with associations
-		if err := db.Session(&gorm.Session{FullSaveAssociations: true}).Save(&routine).Error; err != nil {
-			jsonError(w, http.StatusInternalServerError, "Failed to update routine: "+err.Error())
+		routine.ID = uint(id)
+		if err := db.Save(&routine).Error; err != nil {
+			jsonError(w, http.StatusInternalServerError, "Failed to update routine")
 			return
 		}
 
-		// Reload complete data
-		db.Preload("Exercises").Preload("Supersets").Preload("Supersets.Sets").First(&routine, id)
 		jsonResponse(w, http.StatusOK, routine)
 	}
 }
 
 func deleteRoutineHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		id := r.PathValue("id")
+		id, err := getIDFromPath(r)
+		if err != nil {
+			jsonError(w, http.StatusBadRequest, "Invalid routine ID")
+			return
+		}
+
 		if err := db.Delete(&database.Routine{}, id).Error; err != nil {
-			jsonError(w, http.StatusInternalServerError, "Failed to delete routine: "+err.Error())
+			jsonError(w, http.StatusInternalServerError, "Failed to delete routine")
 			return
 		}
-		jsonResponse(w, http.StatusOK, map[string]string{"message": "Routine deleted successfully"})
+
+		jsonResponse(w, http.StatusOK, map[string]string{"message": "Routine deleted"})
 	}
 }
 
-// Exercises handlers
-func getExercisesHandler(db *gorm.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var exercises []database.Exercise
-		if err := db.Find(&exercises).Error; err != nil {
-			jsonError(w, http.StatusInternalServerError, "Failed to fetch exercises: "+err.Error())
-			return
-		}
-		jsonResponse(w, http.StatusOK, exercises)
-	}
-}
-
-func getExerciseHandler(db *gorm.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		id := r.PathValue("id")
-		var exercise database.Exercise
-		if err := db.First(&exercise, id).Error; err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				jsonError(w, http.StatusNotFound, "Exercise not found")
-				return
-			}
-			jsonError(w, http.StatusInternalServerError, "Failed to fetch exercise: "+err.Error())
-			return
-		}
-		jsonResponse(w, http.StatusOK, exercise)
-	}
-}
-
-func createExerciseHandler(db *gorm.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var exercise database.Exercise
-		if err := json.NewDecoder(r.Body).Decode(&exercise); err != nil {
-			jsonError(w, http.StatusBadRequest, "Invalid request body: "+err.Error())
-			return
-		}
-
-		if err := db.Create(&exercise).Error; err != nil {
-			jsonError(w, http.StatusInternalServerError, "Failed to create exercise: "+err.Error())
-			return
-		}
-
-		jsonResponse(w, http.StatusCreated, exercise)
-	}
-}
-
-func upsertExercisesHandler(dbStruct *database.Database) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if err := dbStruct.UpdateExercises(); err != nil {
-			jsonError(w, http.StatusInternalServerError, "Failed to update exercises: "+err.Error())
-			return
-		}
-
-		jsonResponse(w, http.StatusOK, map[string]string{"message": "Exercises updated successfully"})
-	}
-}
-
-func updateExerciseHandler(db *gorm.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		id := r.PathValue("id")
-
-		// Verify exercise exists
-		var exercise database.Exercise
-		if err := db.First(&exercise, id).Error; err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				jsonError(w, http.StatusNotFound, "Exercise not found")
-				return
-			}
-			jsonError(w, http.StatusInternalServerError, "Database error: "+err.Error())
-			return
-		}
-
-		// Parse update data
-		if err := json.NewDecoder(r.Body).Decode(&exercise); err != nil {
-			jsonError(w, http.StatusBadRequest, "Invalid request body: "+err.Error())
-			return
-		}
-
-		if err := db.Save(&exercise).Error; err != nil {
-			jsonError(w, http.StatusInternalServerError, "Failed to update exercise: "+err.Error())
-			return
-		}
-
-		jsonResponse(w, http.StatusOK, exercise)
-	}
-}
-
-func deleteExerciseHandler(db *gorm.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		id := r.PathValue("id")
-		if err := db.Delete(&database.Exercise{}, id).Error; err != nil {
-			jsonError(w, http.StatusInternalServerError, "Failed to delete exercise: "+err.Error())
-			return
-		}
-		jsonResponse(w, http.StatusOK, map[string]string{"message": "Exercise deleted successfully"})
-	}
-}
-
-// RecordRoutines handlers
+// Record routine handlers (workout sessions)
 func getRecordRoutinesHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var records []database.RecordRoutine
-		result := db.Preload("RecordExercises").Preload("Routine.Exercises").Preload("Routine.Supersets").Find(&records)
-		if result.Error != nil {
-			jsonError(w, http.StatusInternalServerError, "Failed to fetch record routines: "+result.Error.Error())
+		query := db.Preload("Routine").Order("created_at DESC")
+
+		// Optional limit for recent workouts
+		if limit := r.URL.Query().Get("limit"); limit != "" {
+			if l, err := strconv.Atoi(limit); err == nil {
+				query = query.Limit(l)
+			}
+		}
+
+		if err := query.Find(&records).Error; err != nil {
+			jsonError(w, http.StatusInternalServerError, "Database error")
 			return
 		}
+
 		jsonResponse(w, http.StatusOK, records)
 	}
 }
 
 func getRecordRoutineHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		id := r.PathValue("id")
-		var record database.RecordRoutine
-		result := db.Preload("Routine").Preload("Routine.Exercises").Preload("Routine.Supersets").First(&record, id)
-		if result.Error != nil {
-			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-				jsonError(w, http.StatusNotFound, "Record routine not found")
-				return
-			}
-			jsonError(w, http.StatusInternalServerError, "Failed to fetch record routine: "+result.Error.Error())
+		id, err := getIDFromPath(r)
+		if err != nil {
+			jsonError(w, http.StatusBadRequest, "Invalid record ID")
 			return
 		}
+
+		var record database.RecordRoutine
+		if err := db.Preload("Routine").
+			Preload("RecordItems.RoutineItem").
+			Preload("RecordItems.RecordExerciseItems.ExerciseItem.Exercise.PrimaryMuscles").
+			Preload("RecordItems.RecordExerciseItems.ExerciseItem.Exercise.SecondaryMuscles").
+			Preload("RecordItems.RecordExerciseItems.RecordSets.Set").
+			Order("RecordItems.order_index, RecordItems.RecordExerciseItems.order_index, RecordItems.RecordExerciseItems.RecordSets.order_index").
+			First(&record, id).Error; err != nil {
+			if err == gorm.ErrRecordNotFound {
+				jsonError(w, http.StatusNotFound, "Record not found")
+				return
+			}
+			jsonError(w, http.StatusInternalServerError, "Database error")
+			return
+		}
+
 		jsonResponse(w, http.StatusOK, record)
 	}
 }
@@ -302,17 +281,14 @@ func createRecordRoutineHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var record database.RecordRoutine
 		if err := json.NewDecoder(r.Body).Decode(&record); err != nil {
-			jsonError(w, http.StatusBadRequest, "Invalid request body: "+err.Error())
+			jsonError(w, http.StatusBadRequest, "Invalid JSON")
 			return
 		}
 
 		if err := db.Create(&record).Error; err != nil {
-			jsonError(w, http.StatusInternalServerError, "Failed to create record routine: "+err.Error())
+			jsonError(w, http.StatusInternalServerError, "Failed to create record")
 			return
 		}
-
-		// Reload with associations
-		db.Preload("Routine").Preload("Routine.Exercises").Preload("Routine.Supersets").First(&record, record.ID)
 
 		jsonResponse(w, http.StatusCreated, record)
 	}
@@ -320,121 +296,115 @@ func createRecordRoutineHandler(db *gorm.DB) http.HandlerFunc {
 
 func updateRecordRoutineHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		id := r.PathValue("id")
+		id, err := getIDFromPath(r)
+		if err != nil {
+			jsonError(w, http.StatusBadRequest, "Invalid record ID")
+			return
+		}
+
 		var record database.RecordRoutine
-
-		// Check if exists
-		if err := db.First(&record, id).Error; err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				jsonError(w, http.StatusNotFound, "Record routine not found")
-				return
-			}
-			jsonError(w, http.StatusInternalServerError, "Database error: "+err.Error())
-			return
-		}
-
-		// Parse update data
 		if err := json.NewDecoder(r.Body).Decode(&record); err != nil {
-			jsonError(w, http.StatusBadRequest, "Invalid request body: "+err.Error())
+			jsonError(w, http.StatusBadRequest, "Invalid JSON")
 			return
 		}
 
-		// Save with associations
-		if err := db.Session(&gorm.Session{FullSaveAssociations: true}).Save(&record).Error; err != nil {
-			jsonError(w, http.StatusInternalServerError, "Failed to update record routine: "+err.Error())
+		record.ID = uint(id)
+		if err := db.Save(&record).Error; err != nil {
+			jsonError(w, http.StatusInternalServerError, "Failed to update record")
 			return
 		}
 
-		// Reload complete data
-		db.Preload("Routine").Preload("Routine.Exercises").Preload("Routine.Supersets").First(&record, id)
 		jsonResponse(w, http.StatusOK, record)
 	}
 }
 
 func deleteRecordRoutineHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		id := r.PathValue("id")
-		if err := db.Delete(&database.RecordRoutine{}, id).Error; err != nil {
-			jsonError(w, http.StatusInternalServerError, "Failed to delete record routine: "+err.Error())
+		id, err := getIDFromPath(r)
+		if err != nil {
+			jsonError(w, http.StatusBadRequest, "Invalid record ID")
 			return
 		}
-		jsonResponse(w, http.StatusOK, map[string]string{"message": "Record routine deleted successfully"})
+
+		if err := db.Delete(&database.RecordRoutine{}, id).Error; err != nil {
+			jsonError(w, http.StatusInternalServerError, "Failed to delete record")
+			return
+		}
+
+		jsonResponse(w, http.StatusOK, map[string]string{"message": "Record deleted"})
 	}
 }
 
+// Stats handler
 func getStatsHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		stats := WorkoutStats{}
 
-		// Get total workouts
-		if err := db.Model(&database.RecordRoutine{}).Count(&stats.TotalWorkouts).Error; err != nil {
-			jsonError(w, http.StatusInternalServerError, "Failed to count workouts: "+err.Error())
-			return
+		// Total workouts
+		db.Model(&database.RecordRoutine{}).Count(&stats.TotalWorkouts)
+
+		// Total minutes (sum of all workout durations)
+		var totalSeconds uint
+		db.Model(&database.RecordRoutine{}).Select("COALESCE(SUM(duration), 0)").Scan(&totalSeconds)
+		stats.TotalMinutes = int(totalSeconds / 60)
+
+		// Total exercises completed
+		db.Model(&database.RecordExerciseItem{}).Count(&stats.TotalExercises)
+
+		// Most frequent exercise
+		var exerciseStats struct {
+			ExerciseName string `json:"exercise_name"`
+			Count        int    `json:"count"`
 		}
+		db.Raw(`
+			SELECT e.name as exercise_name, COUNT(*) as count
+			FROM record_exercise_items rei
+			JOIN exercise_items ei ON rei.exercise_item_id = ei.id
+			JOIN exercises e ON ei.exercise_id = e.id
+			GROUP BY e.id, e.name
+			ORDER BY count DESC
+			LIMIT 1
+		`).Scan(&exerciseStats)
 
-		// Get total minutes
-		stats.TotalMinutes = 0
-
-		// Get total exercises
-		if err := db.Model(&database.RecordExercise{}).Count(&stats.TotalExercises).Error; err != nil {
-			jsonError(w, http.StatusInternalServerError, "Failed to count exercises: "+err.Error())
-			return
-		}
-
-		// Get most frequent exercise
-		var mostFrequentExercise struct {
-			Name  string `gorm:"column:name"`
-			Count int    `gorm:"column:count"`
-		}
-		exerciseQuery := db.Model(&database.RecordExercise{}).
-			Select("exercises.name, COUNT(*) as count").
-			Joins("JOIN exercises ON record_exercises.exercise_id = exercises.id").
-			Group("exercises.name").
-			Order("count DESC").
-			Limit(1)
-
-		if err := exerciseQuery.Scan(&mostFrequentExercise).Error; err == nil && mostFrequentExercise.Name != "" {
+		if exerciseStats.Count > 0 {
 			stats.MostFrequentExercise = &struct {
 				Name  string `json:"name"`
 				Count int    `json:"count"`
 			}{
-				Name:  mostFrequentExercise.Name,
-				Count: mostFrequentExercise.Count,
+				Name:  exerciseStats.ExerciseName,
+				Count: exerciseStats.Count,
 			}
 		}
 
-		// Get most frequent routine
-		var mostFrequentRoutine struct {
-			Name  string `gorm:"column:name"`
-			Count int    `gorm:"column:count"`
+		// Most frequent routine
+		var routineStats struct {
+			RoutineName string `json:"routine_name"`
+			Count       int    `json:"count"`
 		}
-		routineQuery := db.Model(&database.RecordRoutine{}).
-			Select("routines.name, COUNT(*) as count").
-			Joins("JOIN routines ON record_routines.routine_id = routines.id").
-			Group("routines.name").
-			Order("count DESC").
-			Limit(1)
+		db.Raw(`
+			SELECT r.name as routine_name, COUNT(*) as count
+			FROM record_routines rr
+			JOIN routines r ON rr.routine_id = r.id
+			GROUP BY r.id, r.name
+			ORDER BY count DESC
+			LIMIT 1
+		`).Scan(&routineStats)
 
-		if err := routineQuery.Scan(&mostFrequentRoutine).Error; err == nil && mostFrequentRoutine.Name != "" {
+		if routineStats.Count > 0 {
 			stats.MostFrequentRoutine = &struct {
 				Name  string `json:"name"`
 				Count int    `json:"count"`
 			}{
-				Name:  mostFrequentRoutine.Name,
-				Count: mostFrequentRoutine.Count,
+				Name:  routineStats.RoutineName,
+				Count: routineStats.Count,
 			}
 		}
 
-		// Get recent workouts (last 5)
-		if err := db.
-			Preload("RecordRoutineItems").
-			Preload("Routine").
+		// Recent workouts (last 5)
+		db.Preload("Routine").
 			Order("created_at DESC").
 			Limit(5).
-			Find(&stats.RecentWorkouts).Error; err != nil {
-			jsonError(w, http.StatusInternalServerError, "Failed to fetch recent workouts: "+err.Error())
-			return
-		}
+			Find(&stats.RecentWorkouts)
 
 		jsonResponse(w, http.StatusOK, stats)
 	}

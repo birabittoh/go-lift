@@ -1,229 +1,142 @@
-import type { 
-  Exercise, 
-  Routine, 
-  RecordRoutine, 
-  User,
-  Equipment,
-  MuscleGroup,
-  Set,
-  SuperSet,
-  RecordExercise, 
-  WorkoutStats
-} from '../types/models';
+import type { User, Exercise, Muscle, Routine, RecordRoutine, WorkoutStats } from '../types/models';
 
-// Base API URL - should be configurable via environment variables in a real app
-const API_BASE_URL = '/api';
+const API_BASE = '/api';
 
-// Generic fetch with error handling
-async function fetchApi<T>(
-  endpoint: string, 
-  options: RequestInit = {}
-): Promise<T> {
-  const url = `${API_BASE_URL}${endpoint}`;
-  
-  const response = await fetch(url, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-    ...options,
-  });
-
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(error || `API request failed with status ${response.status}`);
+class BaseService<T> {
+  protected endpoint: string;
+  constructor(endpoint: string) {
+    this.endpoint = endpoint;
   }
 
-  return response.json();
+  protected async request<R>(path: string, options?: RequestInit): Promise<R> {
+    const response = await fetch(`${API_BASE}${path}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers,
+      },
+      ...options,
+    });
+
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.status} ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  async getAll(): Promise<T[]> {
+    return this.request<T[]>(this.endpoint);
+  }
+
+  async get(id: number): Promise<T> {
+    return this.request<T>(`${this.endpoint}/${id}`);
+  }
+
+  async create(data: Omit<T, 'id' | 'createdAt' | 'updatedAt'>): Promise<T> {
+    return this.request<T>(this.endpoint, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async update(id: number, data: Partial<T>): Promise<T> {
+    return this.request<T>(`${this.endpoint}/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async delete(id: number): Promise<void> {
+    await this.request<void>(`${this.endpoint}/${id}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
-// Equipment API services
-export const EquipmentService = {
-  getAll: () => fetchApi<Equipment[]>('/equipment'),
-  
-  getById: (id: number) => fetchApi<Equipment>(`/equipment/${id}`),
-  
-  create: (equipment: Equipment) => fetchApi<Equipment>('/equipment', {
-    method: 'POST',
-    body: JSON.stringify(equipment),
-  }),
-  
-  update: (id: number, equipment: Equipment) => fetchApi<Equipment>(`/equipment/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(equipment),
-  }),
-  
-  delete: (id: number) => fetchApi<void>(`/equipment/${id}`, {
-    method: 'DELETE',
-  }),
-};
+class UserService extends BaseService<User> {
+  constructor() {
+    super('/users');
+  }
 
-// MuscleGroup API services
-export const MuscleGroupService = {
-  getAll: () => fetchApi<MuscleGroup[]>('/musclegroups'),
-  
-  getById: (id: number) => fetchApi<MuscleGroup>(`/musclegroups/${id}`),
-  
-  create: (muscleGroup: MuscleGroup) => fetchApi<MuscleGroup>('/musclegroups', {
-    method: 'POST',
-    body: JSON.stringify(muscleGroup),
-  }),
-  
-  update: (id: number, muscleGroup: MuscleGroup) => fetchApi<MuscleGroup>(`/musclegroups/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(muscleGroup),
-  }),
-  
-  delete: (id: number) => fetchApi<void>(`/musclegroups/${id}`, {
-    method: 'DELETE',
-  }),
-};
+  // Override get to default to user ID 1
+  async get(id: number = 1): Promise<User> {
+    return super.get(id);
+  }
+}
 
-// Exercise API services
-export const ExerciseService = {
-  getAll: () => fetchApi<Exercise[]>('/exercises'),
-  
-  getById: (id: number) => fetchApi<Exercise>(`/exercises/${id}`),
-  
-  create: (exercise: Exercise) => fetchApi<Exercise>('/exercises', {
-    method: 'POST',
-    body: JSON.stringify(exercise),
-  }),
-  
-  update: (id: number, exercise: Exercise) => fetchApi<Exercise>(`/exercises/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(exercise),
-  }),
-  
-  delete: (id: number) => fetchApi<void>(`/exercises/${id}`, {
-    method: 'DELETE',
-  }),
-};
+class ExerciseService extends BaseService<Exercise> {
+  constructor() {
+    super('/exercises');
+  }
+}
 
-// Set API services
-export const SetService = {
-  getAll: (exerciseId: number) => fetchApi<Set[]>(`/exercises/${exerciseId}/sets`),
-  
-  getById: (id: number) => fetchApi<Set>(`/sets/${id}`),
-  
-  create: (set: Set) => fetchApi<Set>('/sets', {
-    method: 'POST',
-    body: JSON.stringify(set),
-  }),
-  
-  update: (id: number, set: Set) => fetchApi<Set>(`/sets/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(set),
-  }),
-  
-  delete: (id: number) => fetchApi<void>(`/sets/${id}`, {
-    method: 'DELETE',
-  }),
-};
+class MuscleService extends BaseService<Muscle> {
+  constructor() {
+    super('/muscles');
+  }
+}
 
-// SuperSet API services
-export const SuperSetService = {
-  getAll: () => fetchApi<SuperSet[]>('/supersets'),
-  
-  getById: (id: number) => fetchApi<SuperSet>(`/supersets/${id}`),
-  
-  create: (superSet: SuperSet) => fetchApi<SuperSet>('/supersets', {
-    method: 'POST',
-    body: JSON.stringify(superSet),
-  }),
-  
-  update: (id: number, superSet: SuperSet) => fetchApi<SuperSet>(`/supersets/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(superSet),
-  }),
-  
-  delete: (id: number) => fetchApi<void>(`/supersets/${id}`, {
-    method: 'DELETE',
-  }),
-};
+class RoutineService extends BaseService<Routine> {
+  constructor() {
+    super('/routines');
+  }
+}
 
-// Routine API services
-export const RoutineService = {
-  getAll: () => fetchApi<Routine[]>('/routines'),
-  
-  getById: (id: number) => fetchApi<Routine>(`/routines/${id}`),
-  
-  create: (routine: Routine) => fetchApi<Routine>('/routines', {
-    method: 'POST',
-    body: JSON.stringify(routine),
-  }),
-  
-  update: (id: number, routine: Routine) => fetchApi<Routine>(`/routines/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(routine),
-  }),
-  
-  delete: (id: number) => fetchApi<void>(`/routines/${id}`, {
-    method: 'DELETE',
-  }),
-};
+class RecordService extends BaseService<RecordRoutine> {
+  constructor() {
+    super('/records');
+  }
+}
 
-// RecordRoutine (Workout) API services
-export const WorkoutService = {
-  getAll: () => fetchApi<RecordRoutine[]>('/recordroutines'),
-  
-  getById: (id: number) => fetchApi<RecordRoutine>(`/recordroutines/${id}`),
-  
-  create: (workout: RecordRoutine) => fetchApi<RecordRoutine>('/recordroutines', {
-    method: 'POST',
-    body: JSON.stringify(workout),
-  }),
-  
-  update: (id: number, workout: RecordRoutine) => fetchApi<RecordRoutine>(`/recordroutines/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(workout),
-  }),
-  
-  delete: (id: number) => fetchApi<void>(`/recordroutines/${id}`, {
-    method: 'DELETE',
-  }),
-  
-  // Additional method to get workout statistics for the home page
-  getStats: () => fetchApi<WorkoutStats>('/stats'),
-};
+class StatsService {
+  protected async request<R>(path: string, options?: RequestInit): Promise<R> {
+    const response = await fetch(`${API_BASE}${path}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers,
+      },
+      ...options,
+    });
 
-// RecordExercise API services
-export const RecordExerciseService = {
-  getAll: (recordRoutineId: number) => fetchApi<RecordExercise[]>(`/recordroutines/${recordRoutineId}/exercises`),
-  
-  getById: (id: number) => fetchApi<RecordExercise>(`/recordexercises/${id}`),
-  
-  create: (recordExercise: RecordExercise) => fetchApi<RecordExercise>('/recordexercises', {
-    method: 'POST',
-    body: JSON.stringify(recordExercise),
-  }),
-  
-  update: (id: number, recordExercise: RecordExercise) => fetchApi<RecordExercise>(`/recordexercises/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(recordExercise),
-  }),
-  
-  delete: (id: number) => fetchApi<void>(`/recordexercises/${id}`, {
-    method: 'DELETE',
-  }),
-};
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.status} ${response.statusText}`);
+    }
 
-// User profile service
-export const ProfileService = {
-  get: async () => {
-    const user = await fetchApi<User>('/users/1');
-    user.birthDate = new Date(user.birthDate).toISOString();
-    return user;
-  },
-  
-  update: async (profile: User) => {
-    profile.birthDate = new Date(profile.birthDate).toISOString();
-    profile.isFemale = profile.isFemale === 'true';
-    profile.weight = +profile.weight;
-    profile.height = +profile.height;
+    return response.json();
+  }
 
-    return await fetchApi<User>('/users/1', {
-    method: 'PUT',
-    body: JSON.stringify(profile),
-  })},
-};
+  async get(): Promise<WorkoutStats> {
+    return this.request<WorkoutStats>('/stats');
+  }
+}
+
+class HealthService {
+  protected async request<R>(path: string, options?: RequestInit): Promise<R> {
+    const response = await fetch(`${API_BASE}${path}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers,
+      },
+      ...options,
+    });
+
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.status} ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  async ping(): Promise<{ message: string }> {
+    return this.request<{ message: string }>('/ping');
+  }
+}
+
+// Export service instances
+export const userService = new UserService();
+export const exerciseService = new ExerciseService();
+export const muscleService = new MuscleService();
+export const routineService = new RoutineService();
+export const recordService = new RecordService();
+export const statsService = new StatsService();
+export const healthService = new HealthService();

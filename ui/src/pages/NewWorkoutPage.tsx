@@ -13,13 +13,12 @@ import {
 import type { 
   Routine, 
   Exercise, 
-  RecordRoutine, 
-  RecordExercise,
+  RecordRoutine,
   RecordSet,
   Set,
-  RecordRoutineItem
+  RecordItem
 } from '../types/models';
-import { RoutineService, WorkoutService } from '../services/api';
+import { routineService } from '../services/api';
 
 interface SetForWorkout {
   id?: number;
@@ -76,7 +75,7 @@ const NewWorkoutPage = () => {
     const fetchRoutines = async () => {
       try {
         setIsLoading(true);
-        const data = await RoutineService.getAll();
+        const data = await routineService.getAll();
         setRoutines(data);
         
         // Check if a routine was pre-selected (from workouts page)
@@ -109,8 +108,8 @@ const NewWorkoutPage = () => {
     const exercises: ExerciseForWorkout[] = [];
     
     // Process routine items into exercises for the workout
-    routine.routineItems.forEach(item => {
-      if (item.exercise && item.exerciseId) {
+    routine.items.forEach(item => {
+      if (item.exerciseItems && item.exerciseId) {
         // This is a regular exercise item
         const exercise = item.exercise;
         
@@ -315,7 +314,7 @@ const NewWorkoutPage = () => {
       }));
       
       // Create RecordRoutineItems from recordExercises
-      const recordRoutineItems: RecordRoutineItem[] = recordExercises.map((ex, index) => ({
+      const recordItems: RecordItem[] = recordExercises.map((ex, index) => ({
         recordRoutineId: 0, // Will be filled in by backend
         recordExerciseId: undefined, // Will be filled in after recordExercise is created
         recordSuperSetId: null,
@@ -327,10 +326,9 @@ const NewWorkoutPage = () => {
       
       const workoutRecord: RecordRoutine = {
         routineId: selectedRoutine.id!,
-        startedAt: startTime,
-        endedAt: endTime || now,
+        duration: elapsedSeconds,
         routine: selectedRoutine,
-        recordRoutineItems: recordRoutineItems
+        recordItems: recordItems
       };
       
       await WorkoutService.create(workoutRecord);

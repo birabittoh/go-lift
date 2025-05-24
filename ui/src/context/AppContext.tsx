@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import type { User } from '../types/models';
-import { ProfileService } from '../services/api';
+import { userService } from '../services/api';
 
 interface AppContextType {
   user: User | null;
@@ -39,7 +39,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
     const loadProfile = async () => {
       try {
         setIsLoading(true);
-        const profile = await ProfileService.get();
+        const profile = await userService.get(1);
         setUser(profile);
         setError(null);
       } catch (err) {
@@ -58,7 +58,7 @@ export const AppProvider = ({ children }: AppProviderProps) => {
   const updateUser = async (profile: User) => {
     try {
       setIsLoading(true);
-      const updatedProfile = await ProfileService.update(profile);
+      const updatedProfile = await userService.update(1, profile);
       setUser(updatedProfile);
       setError(null);
     } catch (err) {

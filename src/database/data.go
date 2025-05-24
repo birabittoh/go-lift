@@ -2,18 +2,9 @@ package database
 
 import (
 	"log"
-	"time"
 )
 
-var defaultUserList = []User{
-	{
-		Name:      "Admin",
-		IsFemale:  false,
-		Height:    180,
-		Weight:    75,
-		BirthDate: time.Date(1990, 1, 1, 0, 0, 0, 0, time.UTC),
-	},
-}
+var defaultUserList = []User{{Name: "Admin"}}
 
 // CheckInitialData ensures that all necessary initial data is in the database
 func (db *Database) CheckInitialData() (err error) {

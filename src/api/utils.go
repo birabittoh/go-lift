@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -14,4 +15,9 @@ func jsonResponse(w http.ResponseWriter, status int, data interface{}) {
 
 func jsonError(w http.ResponseWriter, status int, messages ...string) {
 	jsonResponse(w, status, map[string]string{"error": strings.Join(messages, " ")})
+}
+
+func getIDFromPath(r *http.Request) (uint, error) {
+	id, err := strconv.Atoi(r.PathValue("id"))
+	return uint(id), err
 }
