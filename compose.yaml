@@ -1,0 +1,12 @@
+services:
+  go-lift:
+    image: ghcr.io/birabittoh/go-lift:main
+    build: .
+    container_name: go-lift
+    restart: unless-stopped
+    ports:
+      - 3000:3000
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
