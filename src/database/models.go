@@ -37,16 +37,8 @@ type Exercise struct {
 	Equipment    *string `gorm:"size:50" json:"equipment"`
 	Instructions *string `json:"instructions"`
 
-	PrimaryMuscles   []Muscle `gorm:"many2many:exercise_primary_muscles;constraint:OnDelete:CASCADE" json:"primaryMuscles"`
-	SecondaryMuscles []Muscle `gorm:"many2many:exercise_secondary_muscles;constraint:OnDelete:CASCADE" json:"secondaryMuscles"`
-
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
-}
-
-type Muscle struct {
-	ID   uint   `gorm:"primaryKey" json:"id"`
-	Name string `gorm:"uniqueIndex;size:50;not null" json:"name"`
+	PrimaryMuscles   *string `json:"primaryMuscles"`
+	SecondaryMuscles *string `json:"secondaryMuscles"`
 
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
@@ -211,7 +203,6 @@ func InitializeDB() (db *Database, err error) {
 	// Auto migrate the models in correct order
 	err = conn.AutoMigrate(
 		&User{},
-		&Muscle{},
 		&Exercise{},
 		&Routine{},
 		&RoutineItem{},
@@ -235,37 +226,4 @@ func InitializeDB() (db *Database, err error) {
 	}
 
 	return db, nil
-}
-
-// Helper methods for creating and querying routines
-
-// CreateRoutineWithData creates a routine with all nested data
-func (db *Database) CreateRoutineWithData(routine *Routine) error {
-	return db.Create(routine).Error
-}
-
-// GetRoutineWithItems retrieves a routine with all its nested data
-func (db *Database) GetRoutineWithItems(routineID uint) (*Routine, error) {
-	var routine Routine
-	err := db.Preload("Items.ExerciseItems.Exercise.PrimaryMuscles").
-		Preload("Items.ExerciseItems.Exercise.SecondaryMuscles").
-		Preload("Items.ExerciseItems.Sets").
-		Order("Items.order_index, Items.ExerciseItems.order_index, Items.ExerciseItems.Sets.order_index").
-		First(&routine, routineID).Error
-
-	return &routine, err
-}
-
-// GetRecordRoutineWithData retrieves a completed workout with all nested data
-func (db *Database) GetRecordRoutineWithData(recordID uint) (*RecordRoutine, error) {
-	var record RecordRoutine
-	err := db.Preload("Routine").
-		Preload("RecordItems.RoutineItem").
-		Preload("RecordItems.RecordExerciseItems.ExerciseItem.Exercise.PrimaryMuscles").
-		Preload("RecordItems.RecordExerciseItems.ExerciseItem.Exercise.SecondaryMuscles").
-		Preload("RecordItems.RecordExerciseItems.RecordSets.Set").
-		Order("RecordItems.order_index, RecordItems.RecordExerciseItems.order_index, RecordItems.RecordExerciseItems.RecordSets.order_index").
-		First(&record, recordID).Error
-
-	return &record, err
 }

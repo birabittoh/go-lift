@@ -1,0 +1,60 @@
+{{ define "body" }}
+<link rel="stylesheet" href="/static/table.css">
+<h1>Exercises</h1>
+
+<!-- Table controls -->
+<div class="table-controls">
+    <input type="text" id="search-input" placeholder="Search exercises...">
+    <div class="column-toggles">
+        <span>Toggle columns:</span>
+        <!-- Column toggles will be added here -->
+    </div>
+</div>
+
+<!-- Exercises table -->
+<table id="data-table" class="data-table">
+    <thead>
+        <tr>
+            <!-- Table headers will be added here -->
+        </tr>
+    </thead>
+    <tbody>
+        <!-- Exercise rows will be populated here -->
+    </tbody>
+</table>
+
+<script src="/static/table.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  // Fetch and display exercises
+  fetch("/api/exercises")
+    .then((response) => response.json())
+    .then((exercises) => {
+        columns = [
+            { id: "id", label: "ID", visible: false },
+            { id: "name", label: "Name", visible: true },
+            { id: "equipment", label: "Equipment", visible: true },
+            { id: "primaryMuscles", label: "Primary muscles", visible: true },
+            { id: "secondaryMuscles", label: "Secondary muscles", visible: true },
+            { id: "category", label: "Category", visible: false },
+            { id: "force", label: "Force", visible: false },
+            { id: "instructions", label: "Instructions", visible: false },
+            { id: "level", label: "Level", visible: false },
+            { id: "mechanic", label: "Mechanic", visible: false },
+        ];
+        data = exercises;
+        console.log(data);
+        setupColumnToggles(columns);
+        renderTable();
+    })
+    .catch((error) => console.error("Error fetching exercises:", error));
+
+  // Search functionality
+  document
+    .getElementById("search-input")
+    .addEventListener("input", function () {
+      renderTable();
+    });
+});
+</script>
+{{ end }}

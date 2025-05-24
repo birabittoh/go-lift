@@ -2,10 +2,9 @@ package api
 
 import (
 	"net/http"
-	"os"
-	"path/filepath"
 
 	"github.com/birabittoh/go-lift/src/database"
+	"github.com/birabittoh/go-lift/src/ui"
 )
 
 const uiDir = "ui"
@@ -29,9 +28,6 @@ func GetServeMux(dbStruct *database.Database) *http.ServeMux {
 	mux.HandleFunc("GET /api/exercises", getExercisesHandler(db))
 	mux.HandleFunc("GET /api/exercises/{id}", getExerciseHandler(db))
 
-	// Muscles routes (read-only)
-	mux.HandleFunc("GET /api/muscles", getMusclesHandler(db))
-
 	// Routines routes
 	mux.HandleFunc("GET /api/routines", getRoutinesHandler(db))
 	mux.HandleFunc("GET /api/routines/{id}", getRoutineHandler(db))
@@ -49,18 +45,21 @@ func GetServeMux(dbStruct *database.Database) *http.ServeMux {
 	// Stats routes
 	mux.HandleFunc("GET /api/stats", getStatsHandler(db))
 
-	// Static UI route
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		requestedFile := filepath.Join(uiDir, r.URL.Path)
-		_, err := os.Stat(requestedFile)
+	/*
+		// Static UI route
+		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			requestedFile := filepath.Join(uiDir, r.URL.Path)
+			_, err := os.Stat(requestedFile)
 
-		if err == nil || r.URL.Path == "/" {
-			fileServer.ServeHTTP(w, r)
-			return
-		}
+			if err == nil || r.URL.Path == "/" {
+				fileServer.ServeHTTP(w, r)
+				return
+			}
 
-		http.ServeFile(w, r, filepath.Join(uiDir, "index.html"))
-	})
+			http.ServeFile(w, r, filepath.Join(uiDir, "index.html"))
+		})
+	*/
+	ui.InitServeMux(mux)
 
 	return mux
 }

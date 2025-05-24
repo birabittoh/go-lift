@@ -1,0 +1,117 @@
+:root {
+  --bg-color: #121212;
+  --text-color: #ffffff;
+  --sidebar-bg: #1e1e1e;
+  --nav-active: #0a84ff;
+}
+
+[data-theme="light"] {
+  --bg-color: #ffffff;
+  --text-color: #333333;
+  --sidebar-bg: #f0f0f0;
+  --nav-active: #007aff;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.3s, color 0.3s;
+}
+
+html:not([data-theme]) body {
+  display: none;
+}
+
+
+.loading {
+  transition: none;
+}
+
+.container {
+  display: flex;
+  min-height: 100vh;
+}
+
+.content {
+  flex: 1;
+  padding: 20px;
+  padding-bottom: 80px; /* Space for mobile nav */
+}
+
+/* Navigation styles */
+nav {
+  background-color: var(--sidebar-bg);
+  transition: background-color 0.3s;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  text-decoration: none;
+  color: var(--text-color);
+}
+
+.nav-link.active {
+  color: var(--nav-active);
+}
+
+.nav-icon {
+  margin-right: 8px;
+  font-size: 1.2em;
+}
+
+/* Theme toggle */
+.theme-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.5em;
+  color: var(--text-color);
+}
+
+/* Mobile navigation (bottom) */
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    display: flex;
+    justify-content: space-around;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+  }
+
+  .nav-link {
+    flex-direction: column;
+    font-size: 0.8em;
+    padding: 8px 0;
+  }
+
+  .nav-icon {
+    margin-right: 0;
+    margin-bottom: 4px;
+  }
+}
+
+/* Desktop navigation (sidebar) */
+@media (min-width: 769px) {
+  .sidebar {
+    width: 220px;
+    min-height: 100vh;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  }
+
+  .nav-link {
+    padding: 12px 24px;
+  }
+}

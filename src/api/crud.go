@@ -76,7 +76,7 @@ func updateUserHandler(db *gorm.DB) http.HandlerFunc {
 func getExercisesHandler(db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var exercises []database.Exercise
-		query := db.Preload("PrimaryMuscles").Preload("SecondaryMuscles")
+		query := db.Model(&database.Exercise{})
 
 		// Optional filtering
 		if category := r.URL.Query().Get("category"); category != "" {
@@ -104,7 +104,7 @@ func getExerciseHandler(db *gorm.DB) http.HandlerFunc {
 		}
 
 		var exercise database.Exercise
-		if err := db.Preload("PrimaryMuscles").Preload("SecondaryMuscles").First(&exercise, id).Error; err != nil {
+		if err := db.First(&exercise, id).Error; err != nil {
 			if err == gorm.ErrRecordNotFound {
 				jsonError(w, http.StatusNotFound, "Exercise not found")
 				return
@@ -114,19 +114,6 @@ func getExerciseHandler(db *gorm.DB) http.HandlerFunc {
 		}
 
 		jsonResponse(w, http.StatusOK, exercise)
-	}
-}
-
-// Muscle handlers (read-only)
-func getMusclesHandler(db *gorm.DB) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var muscles []database.Muscle
-		if err := db.Find(&muscles).Error; err != nil {
-			jsonError(w, http.StatusInternalServerError, "Database error")
-			return
-		}
-
-		jsonResponse(w, http.StatusOK, muscles)
 	}
 }
 
@@ -152,8 +139,7 @@ func getRoutineHandler(db *gorm.DB) http.HandlerFunc {
 		}
 
 		var routine database.Routine
-		if err := db.Preload("Items.ExerciseItems.Exercise.PrimaryMuscles").
-			Preload("Items.ExerciseItems.Exercise.SecondaryMuscles").
+		if err := db.Preload("Items.ExerciseItems.Exercise").
 			Preload("Items.ExerciseItems.Sets").
 			Order("Items.order_index, Items.ExerciseItems.order_index, Items.ExerciseItems.Sets.order_index").
 			First(&routine, id).Error; err != nil {
@@ -260,8 +246,7 @@ func getRecordRoutineHandler(db *gorm.DB) http.HandlerFunc {
 		var record database.RecordRoutine
 		if err := db.Preload("Routine").
 			Preload("RecordItems.RoutineItem").
-			Preload("RecordItems.RecordExerciseItems.ExerciseItem.Exercise.PrimaryMuscles").
-			Preload("RecordItems.RecordExerciseItems.ExerciseItem.Exercise.SecondaryMuscles").
+			Preload("RecordItems.RecordExerciseItems.ExerciseItem.Exercise").
 			Preload("RecordItems.RecordExerciseItems.RecordSets.Set").
 			Order("RecordItems.order_index, RecordItems.RecordExerciseItems.order_index, RecordItems.RecordExerciseItems.RecordSets.order_index").
 			First(&record, id).Error; err != nil {

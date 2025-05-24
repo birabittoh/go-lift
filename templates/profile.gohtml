@@ -1,0 +1,241 @@
+{{ define "body" }}
+<h1>Go Lift</h1>
+<div class="profile-container">
+    <h2>User Profile</h2>
+    
+    <div class="button-group">
+        <button id="editBtn" onclick="toggleEditMode(true)">Edit</button>
+        <button id="saveBtn" onclick="saveProfile()" style="display:none">Save</button>
+        <button id="cancelBtn" onclick="toggleEditMode(false)" style="display:none">Cancel</button>
+    </div>
+    
+    <form id="profileForm">
+        <div class="form-group">
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" value="" disabled>
+        </div>
+        
+        <div class="form-group">
+            <label>Gender:</label>
+            <div class="radio-group">
+                <input type="radio" id="male" name="isFemale" value="false" disabled>
+                <label for="male">Male</label>
+                <input type="radio" id="female" name="isFemale" value="true" disabled>
+                <label for="female">Female</label>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="height">Height (cm):</label>
+            <input type="number" id="height" name="height" value="" step="0.1" disabled>
+        </div>
+        
+        <div class="form-group">
+            <label for="weight">Weight (kg):</label>
+            <input type="number" id="weight" name="weight" value="" step="0.1" disabled>
+        </div>
+        
+        <div class="form-group">
+            <label for="birthDate">Birth Date:</label>
+            <input type="date" id="birthDate" name="birthDate" value="" disabled>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Store original values for cancel functionality
+    let originalValues = {};
+    
+    // Fetch user profile data from API
+    function fetchProfileData() {
+        fetch('/api/users/1')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch profile data');
+                }
+                return response.json();
+            })
+            .then(data => {
+                populateFormData(data);
+                saveOriginalValues();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to load profile: ' + error.message);
+            });
+    }
+    
+    // Populate form with profile data
+    function populateFormData(userData) {
+        document.getElementById('name').value = userData.name || '';
+        document.getElementById('height').value = userData.height || '';
+        document.getElementById('weight').value = userData.weight || '';
+        
+        if (userData.birthDate) {
+            document.getElementById('birthDate').value = userData.birthDate.split('T')[0];
+        }
+        
+        // Set gender radio button
+        if (userData.isFemale !== undefined) {
+            document.getElementById('female').checked = userData.isFemale;
+            document.getElementById('male').checked = !userData.isFemale;
+        }
+    }
+    
+    // Capture initial values
+    function saveOriginalValues() {
+        const form = document.getElementById('profileForm');
+        const formElements = form.elements;
+        
+        for (let i = 0; i < formElements.length; i++) {
+            const element = formElements[i];
+            if (element.name) {
+                if (element.type === 'radio') {
+                    if (element.checked) {
+                        originalValues[element.name] = element.value;
+                    }
+                } else {
+                    originalValues[element.name] = element.value;
+                }
+            }
+        }
+    }
+    
+    // Toggle between view and edit modes
+    function toggleEditMode(isEdit) {
+        const form = document.getElementById('profileForm');
+        const formElements = form.elements;
+        
+        // If entering edit mode, save original values
+        if (isEdit) {
+            saveOriginalValues();
+        }
+        
+        // Toggle form field disabled state
+        for (let i = 0; i < formElements.length; i++) {
+            formElements[i].disabled = !isEdit;
+        }
+        
+        // Toggle button visibility
+        document.getElementById('editBtn').style.display = isEdit ? 'none' : 'inline-block';
+        document.getElementById('saveBtn').style.display = isEdit ? 'inline-block' : 'none';
+        document.getElementById('cancelBtn').style.display = isEdit ? 'inline-block' : 'none';
+        
+        // If canceling, restore original values
+        if (!isEdit) {
+            restoreOriginalValues();
+        }
+    }
+    
+    // Restore original form values
+    function restoreOriginalValues() {
+        const form = document.getElementById('profileForm');
+        
+        for (const name in originalValues) {
+            const elements = form.elements[name];
+            
+            if (elements.length > 1) {
+                // Handle radio buttons
+                for (let i = 0; i < elements.length; i++) {
+                    elements[i].checked = elements[i].value === originalValues[name];
+                }
+            } else {
+                elements.value = originalValues[name];
+            }
+        }
+    }
+    
+    // Save profile changes
+    function saveProfile() {
+        const form = document.getElementById('profileForm');
+        const formData = new FormData(form);
+        const userData = {};
+        
+        // Convert form data to JSON
+        for (const [key, value] of formData.entries()) {
+            if (key === 'isFemale') {
+                userData[key] = value === 'true';
+            } else if (key === 'height' || key === 'weight') {
+                userData[key] = value ? parseFloat(value) : null;
+            } else if (key === 'birthDate') {
+                userData[key] = value ? new Date(value).toISOString() : null;
+            } else {
+                userData[key] = value || null;
+            }
+        }
+        
+        // Send PUT request
+        fetch('/api/users/1', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(userData)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to update profile');
+            }
+            return response.json();
+        })
+        .then(data => {
+            toggleEditMode(false);
+            // Refresh data
+            fetchProfileData();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to update profile: ' + error.message);
+        });
+    }
+    
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        fetchProfileData();
+    });
+</script>
+
+<style>
+    .profile-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    .form-group {
+        margin-bottom: 15px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+    
+    .form-group input {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+    
+    .radio-group {
+        display: flex;
+        gap: 15px;
+    }
+    
+    .radio-group input {
+        width: auto;
+    }
+    
+    .button-group {
+        margin-bottom: 20px;
+    }
+    
+    button {
+        padding: 8px 16px;
+        margin-right: 10px;
+        cursor: pointer;
+    }
+</style>
+{{ end }}
