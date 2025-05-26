@@ -59,7 +59,7 @@ func GetServeMux(dbStruct *database.Database) *http.ServeMux {
 			http.ServeFile(w, r, filepath.Join(uiDir, "index.html"))
 		})
 	*/
-	ui.InitServeMux(mux)
+	ui.InitServeMux(mux, dbStruct)
 
 	return mux
 }

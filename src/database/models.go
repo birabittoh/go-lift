@@ -28,20 +28,23 @@ type User struct {
 }
 
 type Exercise struct {
-	ID           uint    `gorm:"primaryKey;autoIncrement" json:"id"`
-	Name         string  `gorm:"not null;uniqueIndex" json:"name"`
-	Level        string  `gorm:"size:50;not null" json:"level"`
-	Category     string  `gorm:"size:50;not null" json:"category"`
-	Force        *string `gorm:"size:50" json:"force"`
-	Mechanic     *string `gorm:"size:50" json:"mechanic"`
-	Equipment    *string `gorm:"size:50" json:"equipment"`
-	Instructions *string `json:"instructions"`
+	ID                 uint    `gorm:"primaryKey;autoIncrement" json:"id"`
+	Name               string  `gorm:"not null;uniqueIndex" json:"name"`
+	Level              string  `gorm:"size:50;not null" json:"level"`
+	Category           string  `gorm:"size:50;not null" json:"category"`
+	Force              *string `gorm:"size:50" json:"force"`
+	Mechanic           *string `gorm:"size:50" json:"mechanic"`
+	Equipment          *string `gorm:"size:50" json:"equipment"`
+	InstructionsString *string `json:"-"`
 
 	PrimaryMuscles   *string `json:"primaryMuscles"`
 	SecondaryMuscles *string `json:"secondaryMuscles"`
 
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
+
+	Images       []string `gorm:"-" json:"images,omitempty"`
+	Instructions []string `gorm:"-" json:"instructions,omitempty"`
 }
 
 // Routine represents a workout routine blueprint

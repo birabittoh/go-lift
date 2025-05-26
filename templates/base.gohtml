@@ -6,7 +6,7 @@
     <title>Go Lift - {{ capitalize .Page }}</title>
     <link rel="stylesheet" href="/static/styles.css">
 </head>
-<body class="loading">
+<body>
     <div class="container">
         <nav class="sidebar">
             <a href="/" class="nav-link {{ if eq .Page "home" }}active{{ end }}">
@@ -35,9 +35,5 @@
             {{ template "body" . }}
         </main>
     </div>
-
-    <button class="theme-toggle" id="themeToggle">🌓</button>
-
-    <script src="/static/theme.js"></script>
 </body>
 </html>{{ end }}

@@ -66,7 +66,7 @@ func (db *Database) upsertExercise(importedExercise importedExercise) (didSave, 
 			}
 		}
 		instructions := strings.Join(filteredInstructions, "\n")
-		exercise.Instructions = &instructions
+		exercise.InstructionsString = &instructions
 	}
 
 	var exerciseDataChanged bool
@@ -108,7 +108,7 @@ func (db *Database) exerciseDataChanged(existing, new Exercise) bool {
 		!stringPointersEqual(existing.Force, new.Force) ||
 		!stringPointersEqual(existing.Mechanic, new.Mechanic) ||
 		!stringPointersEqual(existing.Equipment, new.Equipment) ||
-		!stringPointersEqual(existing.Instructions, new.Instructions) ||
+		!stringPointersEqual(existing.InstructionsString, new.InstructionsString) ||
 		existing.PrimaryMuscles != new.PrimaryMuscles ||
 		existing.SecondaryMuscles != new.SecondaryMuscles
 }
@@ -178,13 +178,26 @@ func (e Exercise) StringID() string {
 	return idReplacer.Replace(e.Name)
 }
 
-func (e Exercise) Images() (images []string) {
+func (e Exercise) GetImages() (images []string) {
 	id := e.StringID()
 
 	for i := range imageAmount {
 		images = append(images, fmt.Sprintf(imageFormat, id, i))
 	}
 	return
+}
+
+func (e Exercise) GetInstructions() []string {
+	if e.InstructionsString == nil {
+		return nil
+	}
+
+	return strings.Split(*e.InstructionsString, "\n")
+}
+
+func (e *Exercise) Fill() {
+	e.Images = e.GetImages()
+	e.Instructions = e.GetInstructions()
 }
 
 func (db *Database) UpdateExercises() (err error) {
