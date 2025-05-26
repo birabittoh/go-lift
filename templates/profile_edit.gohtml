@@ -2,7 +2,7 @@
 {{ with index .Users 0 }}
 <h1>Edit Profile</h1>
 <div class="container">
-    <form id="profileForm" target="/profile" method="POST">
+    <form id="profileForm" action="/profile/edit" method="POST">
         <div class="button-group">
             <input type="submit" id="saveBtn" value="Save" />
         </div>

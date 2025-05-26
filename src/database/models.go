@@ -27,6 +27,18 @@ type User struct {
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"deletedAt"`
 }
 
+type HeightMeasurement struct {
+	ID        uint      `gorm:"primaryKey" json:"id"`
+	Height    float64   `json:"height"` // In cm
+	CreatedAt time.Time `json:"createdAt"`
+}
+
+type WeightMeasurement struct {
+	ID        uint      `gorm:"primaryKey" json:"id"`
+	Weight    float64   `json:"weight"` // In kg
+	CreatedAt time.Time `json:"createdAt"`
+}
+
 type Exercise struct {
 	ID                 string  `gorm:"primaryKey" json:"id"`
 	Name               string  `gorm:"not null;uniqueIndex" json:"name"`
@@ -206,6 +218,8 @@ func InitializeDB() (db *Database, err error) {
 	// Auto migrate the models in correct order
 	err = conn.AutoMigrate(
 		&User{},
+		&HeightMeasurement{},
+		&WeightMeasurement{},
 		&Exercise{},
 		&Routine{},
 		&RoutineItem{},
