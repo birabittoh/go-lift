@@ -12,6 +12,7 @@ import (
 
 // ImportedExercise represents the JSON structure from the input file
 type importedExercise struct {
+	ID               string   `json:"id"`
 	Name             string   `json:"name"`
 	Level            string   `json:"level"`
 	Category         string   `json:"category"`
@@ -22,17 +23,17 @@ type importedExercise struct {
 	SecondaryMuscles []string `json:"secondaryMuscles"`
 	Instructions     []string `json:"instructions"`
 	Images           []string `json:"images"`
-	ID               string   `json:"id"`
 }
 
 // upsertExercise creates or updates a single exercise with all its related data
 func (db *Database) upsertExercise(importedExercise importedExercise) (didSave, isUpdate bool, err error) {
 	// First, try to find existing exercise by name
 	var existingExercise Exercise
-	result := db.Where("name = ?", importedExercise.Name).Preload("PrimaryMuscles").Preload("SecondaryMuscles").First(&existingExercise)
+	result := db.Where("id = ?", importedExercise.ID).Preload("PrimaryMuscles").Preload("SecondaryMuscles").First(&existingExercise)
 
 	// Create new exercise with basic info
 	exercise := Exercise{
+		ID:       importedExercise.ID,
 		Name:     importedExercise.Name,
 		Level:    importedExercise.Level,
 		Category: importedExercise.Category,
@@ -161,28 +162,11 @@ const (
 	imageAmount = 2
 )
 
-var (
-	idReplacer = strings.NewReplacer(
-		" ", "_",
-		"/", "_",
-		",", "",
-		"(", "",
-		")", "",
-		"-", "-",
-		"'", "",
-	)
-	lastUpdate = time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
-)
-
-func (e Exercise) StringID() string {
-	return idReplacer.Replace(e.Name)
-}
+var lastUpdate = time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
 
 func (e Exercise) GetImages() (images []string) {
-	id := e.StringID()
-
 	for i := range imageAmount {
-		images = append(images, fmt.Sprintf(imageFormat, id, i))
+		images = append(images, fmt.Sprintf(imageFormat, e.ID, i))
 	}
 	return
 }

@@ -28,7 +28,7 @@ type User struct {
 }
 
 type Exercise struct {
-	ID                 uint    `gorm:"primaryKey;autoIncrement" json:"id"`
+	ID                 string  `gorm:"primaryKey" json:"id"`
 	Name               string  `gorm:"not null;uniqueIndex" json:"name"`
 	Level              string  `gorm:"size:50;not null" json:"level"`
 	Category           string  `gorm:"size:50;not null" json:"category"`
@@ -76,7 +76,7 @@ type RoutineItem struct {
 type ExerciseItem struct {
 	ID            uint      `gorm:"primaryKey" json:"id"`
 	RoutineItemID uint      `gorm:"index;not null" json:"routineItemId"`
-	ExerciseID    uint      `gorm:"index;not null" json:"exerciseId"`
+	ExerciseID    string    `gorm:"index;not null" json:"exerciseId"`
 	OrderIndex    int       `gorm:"not null" json:"orderIndex"`
 	CreatedAt     time.Time `json:"createdAt"`
 	UpdatedAt     time.Time `json:"updatedAt"`
