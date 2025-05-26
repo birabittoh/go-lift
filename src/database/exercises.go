@@ -27,11 +27,7 @@ type importedExercise struct {
 
 // upsertExercise creates or updates a single exercise with all its related data
 func (db *Database) upsertExercise(importedExercise importedExercise) (didSave, isUpdate bool, err error) {
-	// First, try to find existing exercise by name
-	var existingExercise Exercise
-	result := db.Where("id = ?", importedExercise.ID).Preload("PrimaryMuscles").Preload("SecondaryMuscles").First(&existingExercise)
-
-	// Create new exercise with basic info
+	// Prepare exercise struct with imported data
 	exercise := Exercise{
 		ID:       importedExercise.ID,
 		Name:     importedExercise.Name,
@@ -58,7 +54,6 @@ func (db *Database) upsertExercise(importedExercise importedExercise) (didSave, 
 	}
 
 	if len(importedExercise.Instructions) > 0 {
-		// Filter out empty instructions
 		var filteredInstructions []string
 		for _, instruction := range importedExercise.Instructions {
 			clean := strings.TrimSpace(instruction)
@@ -70,33 +65,28 @@ func (db *Database) upsertExercise(importedExercise importedExercise) (didSave, 
 		exercise.InstructionsString = &instructions
 	}
 
-	var exerciseDataChanged bool
+	// Use FirstOrCreate to insert or fetch existing
+	var existing Exercise
+	result := db.Where("id = ?", exercise.ID).FirstOrCreate(&existing, exercise)
+	if result.Error != nil {
+		return false, false, fmt.Errorf("failed to upsert exercise: %w", result.Error)
+	}
 
-	if result.Error == nil {
-		// Exercise exists, check if it needs updating
+	if result.RowsAffected == 0 {
+		// No new row created, check if update is needed
 		isUpdate = true
-		exercise.ID = existingExercise.ID
-		exercise.CreatedAt = existingExercise.CreatedAt // Preserve creation time
-
-		// Check if the exercise data has actually changed
-		exerciseDataChanged = db.exerciseDataChanged(existingExercise, exercise)
-
-		// Only update if something has changed
-		if exerciseDataChanged {
+		if db.exerciseDataChanged(existing, exercise) {
+			exercise.ID = existing.ID
+			exercise.CreatedAt = existing.CreatedAt
 			if err := db.Save(&exercise).Error; err != nil {
-				return false, false, fmt.Errorf("failed to update exercise: %w", err)
+				return false, true, fmt.Errorf("failed to update exercise: %w", err)
 			}
 			didSave = true
 		}
 	} else {
-		// Exercise doesn't exist, create it
-		isUpdate = false
-		exerciseDataChanged = true // New exercise, so data is "changed"
-
-		if err := db.Create(&exercise).Error; err != nil {
-			return false, false, fmt.Errorf("failed to create exercise: %w", err)
-		}
+		// New row created
 		didSave = true
+		isUpdate = false
 	}
 
 	return
@@ -110,8 +100,8 @@ func (db *Database) exerciseDataChanged(existing, new Exercise) bool {
 		!stringPointersEqual(existing.Mechanic, new.Mechanic) ||
 		!stringPointersEqual(existing.Equipment, new.Equipment) ||
 		!stringPointersEqual(existing.InstructionsString, new.InstructionsString) ||
-		existing.PrimaryMuscles != new.PrimaryMuscles ||
-		existing.SecondaryMuscles != new.SecondaryMuscles
+		!stringPointersEqual(existing.PrimaryMuscles, new.PrimaryMuscles) ||
+		!stringPointersEqual(existing.SecondaryMuscles, new.SecondaryMuscles)
 }
 
 // Helper function to compare string pointers

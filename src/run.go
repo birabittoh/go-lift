@@ -29,7 +29,7 @@ func Run() (err error) {
 
 	mux := api.GetServeMux(db)
 
-	log.Println("Example running at", listenAddress)
+	log.Println("Listening at", listenAddress)
 	err = http.ListenAndServe(listenAddress, mux)
 	return
 }
