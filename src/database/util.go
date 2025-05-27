@@ -120,7 +120,7 @@ func (db *Database) GetRoutineByID(id uint) (*Routine, error) {
 	return &routine, nil
 }
 
-func (db *Database) CreateRoutine(routine *Routine) error {
+func (db *Database) NewRoutine(routine *Routine) error {
 	if routine.Name == "" || len(routine.Name) > 100 {
 		return fmt.Errorf("invalid routine name")
 	}
@@ -158,4 +158,83 @@ func (db *Database) DeleteRoutine(id uint) error {
 	}
 
 	return nil
+}
+
+func (db *Database) NewRoutineItem(r *Routine) (*RoutineItem, error) {
+	item := &RoutineItem{
+		Routine:    *r,
+		OrderIndex: len(r.RoutineItems),
+	}
+
+	err := db.Create(item).Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to create new routine item: %w", err)
+	}
+
+	return item, nil
+}
+
+func (db *Database) GetRoutineItemByID(id uint) (*RoutineItem, error) {
+	var item RoutineItem
+	err := db.
+		Preload("ExerciseItems").
+		Preload("ExerciseItems.Exercise").
+		First(&item, id).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &item, nil
+}
+
+func (db *Database) DeleteRoutineItem(item *RoutineItem) (uint, error) {
+	if item.ID == 0 {
+		return 0, fmt.Errorf("routine item ID is required for deletion")
+	}
+
+	if err := db.Delete(item).Error; err != nil {
+		return 0, fmt.Errorf("failed to delete routine item: %w", err)
+	}
+
+	return item.RoutineID, nil
+}
+
+func (db *Database) NewExerciseItem(routineItem *RoutineItem, exerciseID string) (*ExerciseItem, error) {
+	item := &ExerciseItem{
+		RoutineItemID: routineItem.ID,
+		ExerciseID:    exerciseID,
+		OrderIndex:    len(routineItem.ExerciseItems),
+	}
+
+	if err := db.Create(item).Error; err != nil {
+		return nil, fmt.Errorf("failed to create new exercise item: %w", err)
+	}
+
+	return item, nil
+}
+
+func (db *Database) DeleteExerciseItem(item *ExerciseItem) (uint, error) {
+	if item.ID == 0 {
+		return 0, fmt.Errorf("exercise item ID is required for deletion")
+	}
+
+	if err := db.Delete(item).Error; err != nil {
+		return 0, fmt.Errorf("failed to delete exercise item: %w", err)
+	}
+
+	return item.RoutineItem.RoutineID, nil
+}
+
+func (db *Database) GetExerciseItemByID(id uint) (*ExerciseItem, error) {
+	var item ExerciseItem
+	err := db.
+		Preload("Exercise").
+		Preload("Sets").
+		Preload("RoutineItem").
+		First(&item, id).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &item, nil
 }

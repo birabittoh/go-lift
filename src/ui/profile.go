@@ -104,6 +104,6 @@ func postProfileEdit(db *database.Database) http.HandlerFunc {
 		}
 
 		// Redirect to profile page
-		http.Redirect(w, r, "/profile", http.StatusSeeOther)
+		redirect(w, r, "/profile")
 	}
 }

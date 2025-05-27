@@ -1,0 +1,84 @@
+{{ define "body" }}
+{{ with index .Routines 0 }}
+    <h1>Routine</h1>
+    <div class="container">
+        <div class="content">
+            <form method="POST" action="/routines/{{ .ID }}">
+                <div class="form-group">
+                    <label for="routineName">Name</label>
+                    <input type="text" id="routineName" name="name" value="{{ .Name }}">
+                </div>
+                <div class="form-group">
+                    <label for="routineDescription">Description</label>
+                    <input type="text" id="routineDescription" name="description" value="{{ .Description }}">
+                </div>
+                <div class="button-group">
+                    <button type="submit">Save</button>
+                </div>
+            </form>
+            {{ if .RoutineItems }}
+            <div>
+                {{ range .RoutineItems }}
+                <div class="routine-item" style="border:1px solid #ddd; border-radius:8px; padding:16px; margin-bottom:18px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span><strong>Routine Item #{{ .OrderIndex }}</strong></span>
+                        <form action="/routine-items/{{ .ID }}/delete" method="POST" style="margin:0;">
+                            <input type="submit" value="Delete routine item">
+                        </form>
+                    </div>
+                    {{ if .ExerciseItems }}
+                    <div class="exercise-items" style="margin-top:12px;">
+                        {{ range .ExerciseItems }}
+                        <div class="exercise-item" style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+                            <form action="/exercise-items/{{ .ID }}/delete" method="POST" style="margin:0;">
+                                <input type="submit" value="Delete exercise item">
+                            </form>
+                            <span>Exercise: {{ .Exercise.Name }}</span>
+                        </div>
+                        {{ end }}
+                    </div>
+                    {{ else }}
+                    <small>No exercises in this item.</small>
+                    {{ end }}
+                    <form action="/routine-items/{{ .ID }}/new/3_4_Sit-Up" method="POST" style="margin-top:10px;">
+                        <input type="submit" value="Add exercise item">
+                    </form>
+                </div>
+                {{ end }}
+            </div>
+            {{ else }}
+            <small>No routine items.</small>
+            {{ end }}
+            <form action="/routines/{{ .ID }}/new" method="POST" style="margin-top:18px;">
+                <input type="submit" value="Add routine item">
+            </form>
+        </div>
+    </div>
+    <style>
+        .routine-item input[type="submit"],
+        .exercise-item input[type="submit"] {
+            background: #0a84ff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        .routine-item input[type="submit"]:hover,
+        .exercise-item input[type="submit"]:hover {
+            background: #006fd6;
+        }
+        .button-group button[type="submit"] {
+            background: #0a84ff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 18px;
+            font-size: 1em;
+            transition: background 0.2s;
+        }
+        .button-group button[type="submit"]:hover {
+            background: #006fd6;
+        }
+    </style>
+{{ end }}
+{{ end }}

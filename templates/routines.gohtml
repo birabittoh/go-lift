@@ -1,4 +1,27 @@
 {{ define "body" }}
-<h1>Go Lift</h1>
-<p>Routines!</p>
+    <h1>Go Lift</h1>
+    <p class="subtitle">Routines!</p>
+    <form action="/routines/new" method="POST">
+        <input type="submit" value="New">
+    </form>
+    <div>
+    {{ if .Routines }}
+        {{ range .Routines }}
+            <div>
+            <div>
+                <h5>{{ .Name }}</h5>
+                <p>{{ .Description }}</p>
+                <form action="/routines/{{ .ID }}" method="GET">
+                    <input type="submit" value="Edit">
+                </form>
+                <form action="/routines/{{ .ID }}/delete" method="POST">
+                    <input type="submit" value="Delete">
+                </form>
+            </div>
+            </div>
+        {{ end }}
+    {{ else }}
+        <p>No routines found.</p>
+    {{ end }}
+    </div>
 {{ end }}

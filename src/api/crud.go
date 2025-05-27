@@ -125,7 +125,7 @@ func createRoutineHandler(db *database.Database) http.HandlerFunc {
 			return
 		}
 
-		err := db.CreateRoutine(&routine)
+		err := db.NewRoutine(&routine)
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				jsonError(w, http.StatusNotFound, "Routine not found")

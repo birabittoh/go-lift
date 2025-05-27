@@ -1,9 +1,20 @@
 package ui
 
 import (
+	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
+
+func getIDFromPath(r *http.Request) (uint, error) {
+	id, err := strconv.Atoi(r.PathValue("id"))
+	return uint(id), err
+}
+
+func redirect(w http.ResponseWriter, r *http.Request, path string) {
+	http.Redirect(w, r, path, http.StatusSeeOther)
+}
 
 func capitalize(s string) string {
 	if s == "" {

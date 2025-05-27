@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/birabittoh/go-lift/src/database"
@@ -18,5 +19,217 @@ func getRoutines(db *database.Database) http.HandlerFunc {
 			Routines: routines,
 		}
 		executeTemplateSafe(w, routinesPath, pageData)
+	}
+}
+
+func getRoutine(db *database.Database) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id, err := getIDFromPath(r)
+		if err != nil {
+			showError(w, "Invalid routine ID: "+err.Error())
+			return
+		}
+
+		routine, err := db.GetRoutineByID(id)
+		if err != nil {
+			showError(w, "Failed to retrieve routine: "+err.Error())
+			return
+		}
+		pageData := &PageData{
+			Page:     "routines",
+			Routines: []database.Routine{*routine},
+		}
+		executeTemplateSafe(w, routinePath, pageData)
+	}
+}
+
+func postRoutineNew(db *database.Database) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		routine := &database.Routine{
+			Name:        "New Routine",
+			Description: "",
+		}
+
+		err := db.NewRoutine(routine)
+		if err != nil {
+			showError(w, "Failed to create new routine: "+err.Error())
+			return
+		}
+
+		// Redirect to edit page
+		redirect(w, r, fmt.Sprintf("/routines/%d", routine.ID))
+	}
+}
+
+func postRoutineDelete(db *database.Database) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id, err := getIDFromPath(r)
+		if err != nil {
+			showError(w, "Invalid routine ID: "+err.Error())
+			return
+		}
+
+		err = db.DeleteRoutine(id)
+		if err != nil {
+			showError(w, "Failed to delete routine: "+err.Error())
+			return
+		}
+
+		redirect(w, r, "/routines")
+	}
+}
+
+func postRoutine(db *database.Database) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		id, err := getIDFromPath(r)
+		if err != nil {
+			showError(w, "Invalid routine ID: "+err.Error())
+			return
+		}
+
+		routine, err := db.GetRoutineByID(id)
+		if err != nil {
+			showError(w, "Failed to retrieve routine: "+err.Error())
+			return
+		}
+
+		routine.Name = r.FormValue("name")
+		routine.Description = r.FormValue("description")
+
+		err = db.UpdateRoutine(routine)
+		if err != nil {
+			showError(w, "Failed to update routine: "+err.Error())
+			return
+		}
+
+		redirect(w, r, "/routines")
+	}
+}
+
+func postRoutineItemNew(db *database.Database) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		id, err := getIDFromPath(r)
+		if err != nil {
+			showError(w, "Invalid routine ID: "+err.Error())
+			return
+		}
+
+		routine, err := db.GetRoutineByID(id)
+		if err != nil {
+			showError(w, "Failed to retrieve routine: "+err.Error())
+			return
+		}
+
+		_, err = db.NewRoutineItem(routine)
+		if err != nil {
+			showError(w, "Failed to create new routine item: "+err.Error())
+			return
+		}
+
+		redirect(w, r, fmt.Sprintf("/routines/%d", routine.ID))
+	}
+}
+
+func postRoutineItemDelete(db *database.Database) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		itemID, err := getIDFromPath(r)
+		if err != nil {
+			showError(w, "Invalid routine item ID: "+err.Error())
+			return
+		}
+
+		item, err := db.GetRoutineItemByID(itemID)
+		if err != nil {
+			showError(w, "Routine item not found")
+			return
+		}
+
+		routineID, err := db.DeleteRoutineItem(item)
+		if err != nil {
+			showError(w, "Failed to delete routine item: "+err.Error())
+			return
+		}
+
+		redirect(w, r, fmt.Sprintf("/routines/%d", routineID))
+	}
+}
+
+func postExerciseItemNew(db *database.Database) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		itemID, err := getIDFromPath(r)
+		if err != nil {
+			showError(w, "Invalid routine item ID: "+err.Error())
+			return
+		}
+
+		exerciseID := r.PathValue("exerciseId")
+		_, err = db.GetExerciseByID(exerciseID)
+		if err != nil {
+			showError(w, "Exercise not found: "+err.Error())
+			return
+		}
+
+		item, err := db.GetRoutineItemByID(itemID)
+		if err != nil {
+			showError(w, "Routine item not found")
+			return
+		}
+
+		_, err = db.NewExerciseItem(item, exerciseID)
+		if err != nil {
+			showError(w, "Failed to create new exercise item: "+err.Error())
+			return
+		}
+
+		redirect(w, r, fmt.Sprintf("/routines/%d", item.RoutineID))
+	}
+}
+
+func postExerciseItemDelete(db *database.Database) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		itemID, err := getIDFromPath(r)
+		if err != nil {
+			showError(w, "Invalid exercise item ID: "+err.Error())
+			return
+		}
+
+		item, err := db.GetExerciseItemByID(itemID)
+		if err != nil {
+			showError(w, "Exercise item not found")
+			return
+		}
+
+		routineID, err := db.DeleteExerciseItem(item)
+		if err != nil {
+			showError(w, "Failed to delete exercise item: "+err.Error())
+			return
+		}
+
+		redirect(w, r, fmt.Sprintf("/routines/%d", routineID))
 	}
 }

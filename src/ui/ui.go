@@ -20,6 +20,7 @@ const (
 	exercisesPath   = "templates" + ps + "exercises.gohtml"
 	exercisePath    = "templates" + ps + "exercise.gohtml"
 	routinesPath    = "templates" + ps + "routines.gohtml"
+	routinePath     = "templates" + ps + "routine.gohtml"
 	workoutsPath    = "templates" + ps + "workouts.gohtml"
 	profilePath     = "templates" + ps + "profile.gohtml"
 	profileEditPath = "templates" + ps + "profile_edit.gohtml"
@@ -72,6 +73,7 @@ func InitServeMux(s *http.ServeMux, db *database.Database) {
 	tmpl[exercisesPath] = parseTemplate(exercisesPath)
 	tmpl[exercisePath] = parseTemplate(exercisePath)
 	tmpl[routinesPath] = parseTemplate(routinesPath)
+	tmpl[routinePath] = parseTemplate(routinePath)
 	tmpl[workoutsPath] = parseTemplate(workoutsPath)
 	tmpl[profilePath] = parseTemplate(profilePath)
 	tmpl[profileEditPath] = parseTemplate(profileEditPath)
@@ -80,9 +82,20 @@ func InitServeMux(s *http.ServeMux, db *database.Database) {
 	s.HandleFunc("GET /exercises", getExercises(db))
 	s.HandleFunc("GET /exercises/{id}", getExercise(db))
 	s.HandleFunc("GET /routines", getRoutines(db))
+	s.HandleFunc("GET /routines/{id}", getRoutine(db))
 	s.HandleFunc("GET /workouts", getWorkouts(db))
 	s.HandleFunc("GET /profile", getProfile(db))
 	s.HandleFunc("GET /profile/edit", getProfileEdit(db))
+
+	s.HandleFunc("POST /routines/new", postRoutineNew(db))
+	s.HandleFunc("POST /routines/{id}", postRoutine(db))
+	s.HandleFunc("POST /routines/{id}/delete", postRoutineDelete(db))
+	s.HandleFunc("POST /routines/{id}/new", postRoutineItemNew(db))
+	s.HandleFunc("POST /routine-items/{id}/delete", postRoutineItemDelete(db))
+	// s.HandleFunc("POST /routine-items/{id}", postRoutineItem(db))
+	s.HandleFunc("POST /routine-items/{id}/new/{exerciseId}", postExerciseItemNew(db))
+	s.HandleFunc("POST /exercise-items/{id}/delete", postExerciseItemDelete(db))
+	// s.HandleFunc("POST /exercise-items/{id}", postExerciseItem(db))
 	s.HandleFunc("POST /profile/edit", postProfileEdit(db))
 
 	s.HandleFunc("GET /static/", func(w http.ResponseWriter, r *http.Request) {
