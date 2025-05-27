@@ -3,7 +3,7 @@ package api
 import (
 	"net/http"
 
-	"gorm.io/gorm"
+	"github.com/birabittoh/go-lift/src/database"
 )
 
 type AutheliaUserInfo struct {
@@ -32,9 +32,9 @@ var mockAutheliaResponse = AutheliaUserInfoResponse{
 func pingHandler(w http.ResponseWriter, r *http.Request) {
 	jsonResponse(w, http.StatusOK, map[string]string{"message": "pong"})
 }
-func connectionHandler(db *gorm.DB) http.HandlerFunc {
+func connectionHandler(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		sqlDB, err := db.DB()
+		sqlDB, err := db.DB.DB()
 		if err != nil {
 			jsonError(w, http.StatusInternalServerError, "Failed to get database connection:", err.Error())
 			return

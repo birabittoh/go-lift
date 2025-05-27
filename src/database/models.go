@@ -15,6 +15,7 @@ type Database struct {
 	*gorm.DB
 }
 
+// User model - kept as is since it's not directly related to routines
 type User struct {
 	ID        uint           `gorm:"primaryKey" json:"id"`
 	Name      string         `gorm:"size:50" json:"name"`
@@ -27,6 +28,7 @@ type User struct {
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"deletedAt"`
 }
 
+// Measurement models - kept as is
 type HeightMeasurement struct {
 	ID        uint      `gorm:"primaryKey" json:"id"`
 	Height    float64   `json:"height"` // In cm
@@ -39,6 +41,7 @@ type WeightMeasurement struct {
 	CreatedAt time.Time `json:"createdAt"`
 }
 
+// Exercise model
 type Exercise struct {
 	ID                 string  `gorm:"primaryKey" json:"id"`
 	Name               string  `gorm:"not null;uniqueIndex" json:"name"`
@@ -55,6 +58,7 @@ type Exercise struct {
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
 
+	// Non-persisted fields
 	Images       []string `gorm:"-" json:"images,omitempty"`
 	Instructions []string `gorm:"-" json:"instructions,omitempty"`
 }
@@ -67,49 +71,48 @@ type Routine struct {
 	CreatedAt   time.Time `json:"createdAt"`
 	UpdatedAt   time.Time `json:"updatedAt"`
 
-	Items []RoutineItem `json:"items"`
+	RoutineItems []RoutineItem `gorm:"foreignKey:RoutineID" json:"routineItems"`
 }
 
-// RoutineItem can be either a single exercise or a superset
+// RoutineItem represents a group of exercises (can be a single exercise or superset)
 type RoutineItem struct {
 	ID         uint      `gorm:"primaryKey" json:"id"`
-	RoutineID  uint      `gorm:"index;not null" json:"routineId"`
-	Type       string    `gorm:"size:20;not null" json:"type"` // "exercise" or "superset"
-	RestTime   int       `gorm:"default:0" json:"restTime"`    // In seconds
-	OrderIndex int       `gorm:"not null" json:"orderIndex"`
+	RoutineID  uint      `gorm:"not null;constraint:OnDelete:CASCADE" json:"routineId"`
+	OrderIndex int       `gorm:"not null;default:0" json:"orderIndex"`
 	CreatedAt  time.Time `json:"createdAt"`
 	UpdatedAt  time.Time `json:"updatedAt"`
 
-	Routine       Routine        `json:"-"`
-	ExerciseItems []ExerciseItem `json:"exerciseItems,omitempty"` // For both single exercises and superset items
+	Routine       Routine        `gorm:"constraint:OnDelete:CASCADE" json:"-"`
+	ExerciseItems []ExerciseItem `gorm:"foreignKey:RoutineItemID" json:"exerciseItems"`
 }
 
-// ExerciseItem represents an exercise within a routine item (could be standalone or part of superset)
+// ExerciseItem represents an exercise within a routine item
 type ExerciseItem struct {
 	ID            uint      `gorm:"primaryKey" json:"id"`
-	RoutineItemID uint      `gorm:"index;not null" json:"routineItemId"`
-	ExerciseID    string    `gorm:"index;not null" json:"exerciseId"`
-	OrderIndex    int       `gorm:"not null" json:"orderIndex"`
+	RoutineItemID uint      `gorm:"not null;constraint:OnDelete:CASCADE" json:"routineItemId"`
+	ExerciseID    string    `gorm:"not null;constraint:OnDelete:CASCADE" json:"exerciseId"`
+	RestTime      uint      `gorm:"not null;default:0" json:"restTime"` // In seconds
+	OrderIndex    int       `gorm:"not null;default:0" json:"orderIndex"`
 	CreatedAt     time.Time `json:"createdAt"`
 	UpdatedAt     time.Time `json:"updatedAt"`
 
-	RoutineItem RoutineItem `json:"-"`
-	Exercise    Exercise    `json:"exercise"`
-	Sets        []Set       `json:"sets"`
+	RoutineItem RoutineItem `gorm:"constraint:OnDelete:CASCADE" json:"-"`
+	Exercise    Exercise    `gorm:"constraint:OnDelete:CASCADE" json:"exercise"`
+	Sets        []Set       `gorm:"foreignKey:ExerciseItemID" json:"sets"`
 }
 
 // Set represents a planned set within an exercise
 type Set struct {
 	ID             uint      `gorm:"primaryKey" json:"id"`
-	ExerciseItemID uint      `gorm:"index;not null" json:"exerciseItemId"`
-	Reps           int       `json:"reps"`
-	Weight         float64   `json:"weight"`
-	Duration       int       `json:"duration"` // In seconds
-	OrderIndex     int       `gorm:"not null" json:"orderIndex"`
+	ExerciseItemID uint      `gorm:"not null;constraint:OnDelete:CASCADE" json:"exerciseItemId"`
+	Reps           uint      `gorm:"default:0" json:"reps"`
+	Weight         float64   `gorm:"default:0" json:"weight"`
+	Duration       uint      `gorm:"default:0" json:"duration"` // In seconds
+	OrderIndex     int       `gorm:"not null;default:0" json:"orderIndex"`
 	CreatedAt      time.Time `json:"createdAt"`
 	UpdatedAt      time.Time `json:"updatedAt"`
 
-	ExerciseItem ExerciseItem `json:"-"`
+	ExerciseItem ExerciseItem `gorm:"constraint:OnDelete:CASCADE" json:"-"`
 }
 
 // ===== RECORD MODELS (for actual workout completion) =====
@@ -117,60 +120,59 @@ type Set struct {
 // RecordRoutine records a completed workout session
 type RecordRoutine struct {
 	ID        uint      `gorm:"primaryKey" json:"id"`
-	RoutineID uint      `gorm:"index;not null" json:"routineId"`
-	Duration  *uint     `json:"duration"` // In seconds
+	RoutineID uint      `gorm:"not null;constraint:OnDelete:CASCADE" json:"routineId"`
+	Duration  *uint     `json:"duration"` // In seconds, total workout time
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
 
-	Routine     Routine      `json:"routine"`
-	RecordItems []RecordItem `json:"recordItems"`
+	Routine            Routine             `gorm:"constraint:OnDelete:CASCADE" json:"routine"`
+	RecordRoutineItems []RecordRoutineItem `gorm:"foreignKey:RecordRoutineID" json:"recordRoutineItems"`
 }
 
-// RecordItem records completion of a routine item (exercise or superset)
-type RecordItem struct {
+// RecordRoutineItem records completion of a routine item (group of exercises)
+type RecordRoutineItem struct {
 	ID              uint      `gorm:"primaryKey" json:"id"`
-	RecordRoutineID uint      `gorm:"index;not null" json:"recordRoutineId"`
-	RoutineItemID   uint      `gorm:"index;not null" json:"routineItemId"`
-	Duration        *uint     `json:"duration"`       // In seconds
-	ActualRestTime  *int      `json:"actualRestTime"` // In seconds
-	OrderIndex      int       `gorm:"not null" json:"orderIndex"`
+	RecordRoutineID uint      `gorm:"not null;constraint:OnDelete:CASCADE" json:"recordRoutineId"`
+	RoutineItemID   uint      `gorm:"not null;constraint:OnDelete:CASCADE" json:"routineItemId"`
+	OrderIndex      int       `gorm:"not null;default:0" json:"orderIndex"`
 	CreatedAt       time.Time `json:"createdAt"`
 	UpdatedAt       time.Time `json:"updatedAt"`
 
-	RecordRoutine       RecordRoutine        `json:"-"`
-	RoutineItem         RoutineItem          `json:"routineItem"`
-	RecordExerciseItems []RecordExerciseItem `json:"recordExerciseItems"`
+	RecordRoutine       RecordRoutine        `gorm:"constraint:OnDelete:CASCADE" json:"-"`
+	RoutineItem         RoutineItem          `gorm:"constraint:OnDelete:CASCADE" json:"routineItem"`
+	RecordExerciseItems []RecordExerciseItem `gorm:"foreignKey:RecordRoutineItemID" json:"recordExerciseItems"`
 }
 
 // RecordExerciseItem records completion of an exercise within a routine item
 type RecordExerciseItem struct {
-	ID             uint      `gorm:"primaryKey" json:"id"`
-	RecordItemID   uint      `gorm:"index;not null" json:"recordItemId"`
-	ExerciseItemID uint      `gorm:"index;not null" json:"exerciseItemId"`
-	OrderIndex     int       `gorm:"not null" json:"orderIndex"`
-	CreatedAt      time.Time `json:"createdAt"`
-	UpdatedAt      time.Time `json:"updatedAt"`
+	ID                  uint      `gorm:"primaryKey" json:"id"`
+	RecordRoutineItemID uint      `gorm:"not null;constraint:OnDelete:CASCADE" json:"recordRoutineItemId"`
+	ExerciseItemID      uint      `gorm:"not null;constraint:OnDelete:CASCADE" json:"exerciseItemId"`
+	ActualRestTime      *int      `json:"actualRestTime"` // In seconds, actual rest taken after this exercise
+	OrderIndex          int       `gorm:"not null;default:0" json:"orderIndex"`
+	CreatedAt           time.Time `json:"createdAt"`
+	UpdatedAt           time.Time `json:"updatedAt"`
 
-	RecordItem   RecordItem   `json:"-"`
-	ExerciseItem ExerciseItem `json:"exerciseItem"`
-	RecordSets   []RecordSet  `json:"recordSets"`
+	RecordRoutineItem RecordRoutineItem `gorm:"constraint:OnDelete:CASCADE" json:"-"`
+	ExerciseItem      ExerciseItem      `gorm:"constraint:OnDelete:CASCADE" json:"exerciseItem"`
+	RecordSets        []RecordSet       `gorm:"foreignKey:RecordExerciseItemID" json:"recordSets"`
 }
 
 // RecordSet records completion of an actual set
 type RecordSet struct {
 	ID                   uint      `gorm:"primaryKey" json:"id"`
-	RecordExerciseItemID uint      `gorm:"index;not null" json:"recordExerciseItemId"`
-	SetID                uint      `gorm:"index;not null" json:"setId"`
-	ActualReps           int       `json:"actualReps"`
-	ActualWeight         float64   `json:"actualWeight"`
-	ActualDuration       int       `json:"actualDuration"` // In seconds
+	RecordExerciseItemID uint      `gorm:"not null;constraint:OnDelete:CASCADE" json:"recordExerciseItemId"`
+	SetID                uint      `gorm:"not null;constraint:OnDelete:CASCADE" json:"setId"`
+	ActualReps           int       `gorm:"default:0" json:"actualReps"`
+	ActualWeight         float64   `gorm:"default:0" json:"actualWeight"`
+	ActualDuration       int       `gorm:"default:0" json:"actualDuration"` // In seconds
 	CompletedAt          time.Time `gorm:"not null" json:"completedAt"`
-	OrderIndex           int       `gorm:"not null" json:"orderIndex"`
+	OrderIndex           int       `gorm:"not null;default:0" json:"orderIndex"`
 	CreatedAt            time.Time `json:"createdAt"`
 	UpdatedAt            time.Time `json:"updatedAt"`
 
-	RecordExerciseItem RecordExerciseItem `json:"-"`
-	Set                Set                `json:"set"`
+	RecordExerciseItem RecordExerciseItem `gorm:"constraint:OnDelete:CASCADE" json:"-"`
+	Set                Set                `gorm:"constraint:OnDelete:CASCADE" json:"set"`
 }
 
 // InitializeDB creates and initializes the SQLite database with all models
@@ -226,7 +228,7 @@ func InitializeDB() (db *Database, err error) {
 		&ExerciseItem{},
 		&Set{},
 		&RecordRoutine{},
-		&RecordItem{},
+		&RecordRoutineItem{},
 		&RecordExerciseItem{},
 		&RecordSet{},
 	)

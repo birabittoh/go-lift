@@ -7,13 +7,8 @@ import (
 	"github.com/birabittoh/go-lift/src/ui"
 )
 
-const uiDir = "ui"
-
-var fileServer = http.FileServer(http.Dir(uiDir))
-
-func GetServeMux(dbStruct *database.Database) *http.ServeMux {
+func GetServeMux(db *database.Database) *http.ServeMux {
 	mux := http.NewServeMux()
-	db := dbStruct.DB
 
 	mux.HandleFunc("GET /authelia/api/user/info", mockAutheliaHandler)
 
@@ -45,21 +40,7 @@ func GetServeMux(dbStruct *database.Database) *http.ServeMux {
 	// Stats routes
 	mux.HandleFunc("GET /api/stats", getStatsHandler(db))
 
-	/*
-		// Static UI route
-		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-			requestedFile := filepath.Join(uiDir, r.URL.Path)
-			_, err := os.Stat(requestedFile)
-
-			if err == nil || r.URL.Path == "/" {
-				fileServer.ServeHTTP(w, r)
-				return
-			}
-
-			http.ServeFile(w, r, filepath.Join(uiDir, "index.html"))
-		})
-	*/
-	ui.InitServeMux(mux, dbStruct)
+	ui.InitServeMux(mux, db)
 
 	return mux
 }

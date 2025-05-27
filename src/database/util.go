@@ -19,9 +19,9 @@ func (db *Database) GetExercises() ([]Exercise, error) {
 	return exercises, nil
 }
 
-func (db *Database) GetExerciseByID(id uint) (*Exercise, error) {
+func (db *Database) GetExerciseByID(id string) (*Exercise, error) {
 	var exercise Exercise
-	err := db.First(&exercise, id).Error
+	err := db.First(&exercise, "id = ?", id).Error
 	if err != nil {
 		return nil, err
 	}
@@ -88,4 +88,74 @@ func (db *Database) UpdateUser(user *User) error {
 	}
 
 	return db.Save(user).Error
+}
+
+func (db *Database) GetRoutines() ([]Routine, error) {
+	var routines []Routine
+	err := db.
+		Preload("RoutineItems").
+		Preload("RoutineItems.ExerciseItems").
+		Preload("RoutineItems.ExerciseItems.Exercise").
+		Preload("RoutineItems.ExerciseItems.Sets").
+		Find(&routines).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return routines, nil
+}
+
+func (db *Database) GetRoutineByID(id uint) (*Routine, error) {
+	var routine Routine
+	err := db.
+		Preload("RoutineItems").
+		Preload("RoutineItems.ExerciseItems").
+		Preload("RoutineItems.ExerciseItems.Exercise").
+		Preload("RoutineItems.ExerciseItems.Sets").
+		First(&routine, id).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &routine, nil
+}
+
+func (db *Database) CreateRoutine(routine *Routine) error {
+	if routine.Name == "" || len(routine.Name) > 100 {
+		return fmt.Errorf("invalid routine name")
+	}
+
+	if err := db.Create(routine).Error; err != nil {
+		return fmt.Errorf("failed to create routine: %w", err)
+	}
+
+	return nil
+}
+
+func (db *Database) UpdateRoutine(routine *Routine) error {
+	if routine.ID == 0 {
+		return fmt.Errorf("routine ID is required for update")
+	}
+
+	if routine.Name == "" || len(routine.Name) > 100 {
+		return fmt.Errorf("invalid routine name")
+	}
+
+	if err := db.Save(routine).Error; err != nil {
+		return fmt.Errorf("failed to update routine: %w", err)
+	}
+
+	return nil
+}
+
+func (db *Database) DeleteRoutine(id uint) error {
+	if id == 0 {
+		return fmt.Errorf("routine ID is required for deletion")
+	}
+
+	if err := db.Delete(&Routine{}, id).Error; err != nil {
+		return fmt.Errorf("failed to delete routine: %w", err)
+	}
+
+	return nil
 }

@@ -10,7 +10,7 @@ import (
 )
 
 // User handlers
-func getUserHandler(db *gorm.DB) http.HandlerFunc {
+func getUserHandler(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id, err := getIDFromPath(r)
 		if err != nil {
@@ -18,8 +18,8 @@ func getUserHandler(db *gorm.DB) http.HandlerFunc {
 			return
 		}
 
-		var user database.User
-		if err := db.First(&user, id).Error; err != nil {
+		user, err := db.GetUserByID(id)
+		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				jsonError(w, http.StatusNotFound, "User not found")
 				return
@@ -27,12 +27,11 @@ func getUserHandler(db *gorm.DB) http.HandlerFunc {
 			jsonError(w, http.StatusInternalServerError, "Database error")
 			return
 		}
-
 		jsonResponse(w, http.StatusOK, user)
 	}
 }
 
-func updateUserHandler(db *gorm.DB) http.HandlerFunc {
+func updateUserHandler(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id, err := getIDFromPath(r)
 		if err != nil {
@@ -41,70 +40,39 @@ func updateUserHandler(db *gorm.DB) http.HandlerFunc {
 		}
 
 		var user database.User
-		if err := db.First(&user, id).Error; err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+			jsonError(w, http.StatusBadRequest, "Invalid JSON")
+			return
+		}
+		user.ID = uint(id)
+		if err := db.UpdateUser(&user); err != nil {
 			if err == gorm.ErrRecordNotFound {
 				jsonError(w, http.StatusNotFound, "User not found")
 				return
 			}
-			jsonError(w, http.StatusInternalServerError, "Database error")
-			return
-		}
-
-		var updateData database.User
-		if err := json.NewDecoder(r.Body).Decode(&updateData); err != nil {
-			jsonError(w, http.StatusBadRequest, "Invalid JSON")
-			return
-		}
-
-		// Update specific fields
-		user.Name = updateData.Name
-		user.IsFemale = updateData.IsFemale
-		user.Height = updateData.Height
-		user.Weight = updateData.Weight
-		user.BirthDate = updateData.BirthDate
-
-		if err := db.Save(&user).Error; err != nil {
 			jsonError(w, http.StatusInternalServerError, "Failed to update user")
 			return
 		}
-
 		jsonResponse(w, http.StatusOK, user)
 	}
 }
 
 // Exercise handlers (read-only)
-func getExercisesHandler(db *gorm.DB) http.HandlerFunc {
+func getExercisesHandler(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var exercises []database.Exercise
-		query := db.Model(&database.Exercise{})
-
-		// Optional filtering
-		if category := r.URL.Query().Get("category"); category != "" {
-			query = query.Where("category = ?", category)
-		}
-		if level := r.URL.Query().Get("level"); level != "" {
-			query = query.Where("level = ?", level)
-		}
-
-		if err := query.Find(&exercises).Error; err != nil {
+		exercises, err := db.GetExercises()
+		if err != nil {
 			jsonError(w, http.StatusInternalServerError, "Database error")
 			return
 		}
-
 		jsonResponse(w, http.StatusOK, exercises)
 	}
 }
 
-func getExerciseHandler(db *gorm.DB) http.HandlerFunc {
+func getExerciseHandler(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		id, err := getIDFromPath(r)
+		exercise, err := db.GetExerciseByID(r.PathValue("id"))
 		if err != nil {
-			jsonError(w, http.StatusBadRequest, "Invalid exercise ID")
-			return
-		}
-
-		var exercise database.Exercise
-		if err := db.First(&exercise, id).Error; err != nil {
 			if err == gorm.ErrRecordNotFound {
 				jsonError(w, http.StatusNotFound, "Exercise not found")
 				return
@@ -112,25 +80,23 @@ func getExerciseHandler(db *gorm.DB) http.HandlerFunc {
 			jsonError(w, http.StatusInternalServerError, "Database error")
 			return
 		}
-
 		jsonResponse(w, http.StatusOK, exercise)
 	}
 }
 
 // Routine handlers
-func getRoutinesHandler(db *gorm.DB) http.HandlerFunc {
+func getRoutinesHandler(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var routines []database.Routine
-		if err := db.Find(&routines).Error; err != nil {
+		routines, err := db.GetRoutines()
+		if err != nil {
 			jsonError(w, http.StatusInternalServerError, "Database error")
 			return
 		}
-
 		jsonResponse(w, http.StatusOK, routines)
 	}
 }
 
-func getRoutineHandler(db *gorm.DB) http.HandlerFunc {
+func getRoutineHandler(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id, err := getIDFromPath(r)
 		if err != nil {
@@ -138,11 +104,8 @@ func getRoutineHandler(db *gorm.DB) http.HandlerFunc {
 			return
 		}
 
-		var routine database.Routine
-		if err := db.Preload("Items.ExerciseItems.Exercise").
-			Preload("Items.ExerciseItems.Sets").
-			Order("Items.order_index, Items.ExerciseItems.order_index, Items.ExerciseItems.Sets.order_index").
-			First(&routine, id).Error; err != nil {
+		routine, err := db.GetRoutineByID(id)
+		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				jsonError(w, http.StatusNotFound, "Routine not found")
 				return
@@ -150,12 +113,11 @@ func getRoutineHandler(db *gorm.DB) http.HandlerFunc {
 			jsonError(w, http.StatusInternalServerError, "Database error")
 			return
 		}
-
 		jsonResponse(w, http.StatusOK, routine)
 	}
 }
 
-func createRoutineHandler(db *gorm.DB) http.HandlerFunc {
+func createRoutineHandler(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var routine database.Routine
 		if err := json.NewDecoder(r.Body).Decode(&routine); err != nil {
@@ -163,16 +125,20 @@ func createRoutineHandler(db *gorm.DB) http.HandlerFunc {
 			return
 		}
 
-		if err := db.Create(&routine).Error; err != nil {
+		err := db.CreateRoutine(&routine)
+		if err != nil {
+			if err == gorm.ErrRecordNotFound {
+				jsonError(w, http.StatusNotFound, "Routine not found")
+				return
+			}
 			jsonError(w, http.StatusInternalServerError, "Failed to create routine")
 			return
 		}
-
 		jsonResponse(w, http.StatusCreated, routine)
 	}
 }
 
-func updateRoutineHandler(db *gorm.DB) http.HandlerFunc {
+func updateRoutineHandler(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id, err := getIDFromPath(r)
 		if err != nil {
@@ -187,16 +153,19 @@ func updateRoutineHandler(db *gorm.DB) http.HandlerFunc {
 		}
 
 		routine.ID = uint(id)
-		if err := db.Save(&routine).Error; err != nil {
+		if err := db.UpdateRoutine(&routine); err != nil {
+			if err == gorm.ErrRecordNotFound {
+				jsonError(w, http.StatusNotFound, "Routine not found")
+				return
+			}
 			jsonError(w, http.StatusInternalServerError, "Failed to update routine")
 			return
 		}
-
 		jsonResponse(w, http.StatusOK, routine)
 	}
 }
 
-func deleteRoutineHandler(db *gorm.DB) http.HandlerFunc {
+func deleteRoutineHandler(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id, err := getIDFromPath(r)
 		if err != nil {
@@ -204,17 +173,20 @@ func deleteRoutineHandler(db *gorm.DB) http.HandlerFunc {
 			return
 		}
 
-		if err := db.Delete(&database.Routine{}, id).Error; err != nil {
+		if err := db.DeleteRoutine(uint(id)); err != nil {
+			if err == gorm.ErrRecordNotFound {
+				jsonError(w, http.StatusNotFound, "Routine not found")
+				return
+			}
 			jsonError(w, http.StatusInternalServerError, "Failed to delete routine")
 			return
 		}
-
 		jsonResponse(w, http.StatusOK, map[string]string{"message": "Routine deleted"})
 	}
 }
 
 // Record routine handlers (workout sessions)
-func getRecordRoutinesHandler(db *gorm.DB) http.HandlerFunc {
+func getRecordRoutinesHandler(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var records []database.RecordRoutine
 		query := db.Preload("Routine").Order("created_at DESC")
@@ -235,7 +207,7 @@ func getRecordRoutinesHandler(db *gorm.DB) http.HandlerFunc {
 	}
 }
 
-func getRecordRoutineHandler(db *gorm.DB) http.HandlerFunc {
+func getRecordRoutineHandler(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id, err := getIDFromPath(r)
 		if err != nil {
@@ -262,7 +234,7 @@ func getRecordRoutineHandler(db *gorm.DB) http.HandlerFunc {
 	}
 }
 
-func createRecordRoutineHandler(db *gorm.DB) http.HandlerFunc {
+func createRecordRoutineHandler(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var record database.RecordRoutine
 		if err := json.NewDecoder(r.Body).Decode(&record); err != nil {
@@ -279,7 +251,7 @@ func createRecordRoutineHandler(db *gorm.DB) http.HandlerFunc {
 	}
 }
 
-func updateRecordRoutineHandler(db *gorm.DB) http.HandlerFunc {
+func updateRecordRoutineHandler(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id, err := getIDFromPath(r)
 		if err != nil {
@@ -303,7 +275,7 @@ func updateRecordRoutineHandler(db *gorm.DB) http.HandlerFunc {
 	}
 }
 
-func deleteRecordRoutineHandler(db *gorm.DB) http.HandlerFunc {
+func deleteRecordRoutineHandler(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id, err := getIDFromPath(r)
 		if err != nil {
@@ -321,7 +293,7 @@ func deleteRecordRoutineHandler(db *gorm.DB) http.HandlerFunc {
 }
 
 // Stats handler
-func getStatsHandler(db *gorm.DB) http.HandlerFunc {
+func getStatsHandler(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		stats := WorkoutStats{}
 
