@@ -210,6 +210,12 @@ func (db *Database) NewExerciseItem(routineItem *RoutineItem, exerciseID string)
 		return nil, fmt.Errorf("failed to create new exercise item: %w", err)
 	}
 
+	emptySet := &Set{ExerciseItemID: item.ID}
+	if err := db.Create(emptySet).Error; err != nil {
+		return nil, fmt.Errorf("failed to create initial set for exercise item: %w", err)
+	}
+	item.Sets = append(item.Sets, *emptySet)
+
 	return item, nil
 }
 
@@ -237,4 +243,103 @@ func (db *Database) GetExerciseItemByID(id uint) (*ExerciseItem, error) {
 	}
 
 	return &item, nil
+}
+
+func (db *Database) AddExerciseToRoutineItem(routineItem *RoutineItem, exercise *Exercise) (*ExerciseItem, error) {
+	item := &ExerciseItem{
+		RoutineItemID: routineItem.ID,
+		ExerciseID:    exercise.ID,
+		OrderIndex:    len(routineItem.ExerciseItems),
+	}
+
+	if err := db.Create(item).Error; err != nil {
+		return nil, fmt.Errorf("failed to add exercise to routine item: %w", err)
+	}
+
+	emptySet := &Set{ExerciseItemID: item.ID}
+	if err := db.Create(emptySet).Error; err != nil {
+		return nil, fmt.Errorf("failed to create initial set for exercise item: %w", err)
+	}
+	item.Sets = append(item.Sets, *emptySet)
+
+	return item, nil
+}
+
+func (db *Database) UpdateExerciseItem(item *ExerciseItem) error {
+	if item.ID == 0 {
+		return fmt.Errorf("exercise item ID is required for update")
+	}
+
+	if item.RestTime > 3600 {
+		return fmt.Errorf("invalid rest time: %d", item.RestTime)
+	}
+
+	if item.ExerciseID == "" {
+		return fmt.Errorf("exercise ID is required")
+	}
+
+	if err := db.Save(item).Error; err != nil {
+		return fmt.Errorf("failed to update exercise item: %w", err)
+	}
+
+	return nil
+}
+
+func (db *Database) NewSet(item *ExerciseItem) (*Set, error) {
+	if item.ID == 0 {
+		return nil, fmt.Errorf("exercise item ID is required for new set")
+	}
+
+	set := &Set{
+		ExerciseItemID: item.ID,
+		OrderIndex:     len(item.Sets),
+	}
+
+	if err := db.Create(set).Error; err != nil {
+		return nil, fmt.Errorf("failed to create new set: %w", err)
+	}
+
+	return set, nil
+}
+
+func (db *Database) GetSetByID(id uint) (*Set, error) {
+	var set Set
+	err := db.
+		Preload("ExerciseItem").
+		Preload("ExerciseItem.RoutineItem").
+		Preload("ExerciseItem.Exercise").
+		First(&set, id).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &set, nil
+}
+
+func (db *Database) UpdateSet(set *Set) error {
+	if set.ID == 0 {
+		return fmt.Errorf("set ID is required for update")
+	}
+
+	if set.Reps > 99 || set.Weight < 0 || set.Weight > 300 || set.Duration > 7200 {
+		return fmt.Errorf("invalid set values: reps=%d, weight=%.2f, duration=%d", set.Reps, set.Weight, set.Duration)
+	}
+
+	if err := db.Save(set).Error; err != nil {
+		return fmt.Errorf("failed to update set: %w", err)
+	}
+
+	return nil
+}
+
+func (db *Database) DeleteSet(set *Set) (uint, error) {
+	if set.ID == 0 {
+		return 0, fmt.Errorf("set ID is required for deletion")
+	}
+
+	if err := db.Delete(set).Error; err != nil {
+		return 0, fmt.Errorf("failed to delete set: %w", err)
+	}
+
+	return set.ExerciseItem.RoutineItem.RoutineID, nil
 }

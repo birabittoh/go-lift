@@ -8,6 +8,18 @@ import (
 
 func getExercises(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		routineItemId, err := getIDFromPath(r)
+		if err != nil {
+			showError(w, "Routine item ID is required")
+			return
+		}
+
+		_, err = db.GetRoutineItemByID(routineItemId)
+		if err != nil {
+			showError(w, "Failed to retrieve routine item: "+err.Error())
+			return
+		}
+
 		exercises, err := db.GetExercises()
 		if err != nil {
 			showError(w, "Failed to retrieve exercises: "+err.Error())
@@ -17,6 +29,7 @@ func getExercises(db *database.Database) http.HandlerFunc {
 		pageData := &PageData{
 			Page:      "exercises",
 			Exercises: exercises,
+			ID:        routineItemId,
 		}
 
 		executeTemplateSafe(w, exercisesPath, pageData)
@@ -25,13 +38,25 @@ func getExercises(db *database.Database) http.HandlerFunc {
 
 func getExercise(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		id := r.PathValue("id")
-		if id == "" {
+		exerciseId := r.PathValue("exerciseId")
+		if exerciseId == "" {
 			showError(w, "Exercise ID is required")
 			return
 		}
 
-		exercise, err := db.GetExerciseByID(id)
+		routineItemId, err := getIDFromPath(r)
+		if err != nil {
+			showError(w, "Routine item ID is required")
+			return
+		}
+
+		_, err = db.GetRoutineItemByID(routineItemId)
+		if err != nil {
+			showError(w, "Failed to retrieve routine item: "+err.Error())
+			return
+		}
+
+		exercise, err := db.GetExerciseByID(exerciseId)
 		if err != nil {
 			showError(w, "Failed to retrieve exercise: "+err.Error())
 			return
@@ -40,6 +65,8 @@ func getExercise(db *database.Database) http.HandlerFunc {
 		pageData := &PageData{
 			Page:      "exercises",
 			Exercises: []database.Exercise{*exercise},
+			ID:        routineItemId,
+			Message:   exerciseId,
 		}
 
 		executeTemplateSafe(w, exercisePath, pageData)

@@ -32,5 +32,9 @@
     <li>{{ . }}</li>
     {{ end }}
 </ol>
+<form method="POST" action="/exercises/{{ $.ID }}/{{ .ID }}">
+    <div class="form-group">
+        <input type="submit" value="Add to Routine">
+    </div>
 {{ end }}
 {{ end }}

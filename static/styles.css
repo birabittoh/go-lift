@@ -147,6 +147,29 @@ input[type="submit"] {
   cursor: pointer;
 }
 
+.primary-button {
+  background-color: var(--nav-active);
+  color: var(--text-color);
+  border: none;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+
+.primary-button:hover {
+  background-color: darken(var(--nav-active), 10%);
+}
+
+.error-button {
+  background-color: #ff3b30;
+  color: var(--text-color);
+  border: none;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+.error-button:hover {
+  background-color: darken(#ff3b30, 10%);
+}
+
 input[disabled] {
   color: var(--text-color);
   cursor: not-allowed;

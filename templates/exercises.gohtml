@@ -21,7 +21,7 @@
             <td>{{ .PrimaryMuscles }}</td>
             <td>{{ coalesce .Force "-" }}</td>
             <td>{{ .Category }}</td>
-            <td><a href="/exercises/{{ .ID }}" title="Details">➡️</a></td>
+            <td><a href="/exercises/{{ $.ID }}/{{ .ID }}" title="Details">➡️</a></td>
         </tr>
         {{ end }}
     </tbody>
