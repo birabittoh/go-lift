@@ -64,20 +64,22 @@ func postSet(db *database.Database) http.HandlerFunc {
 				return
 			}
 
-			set.Reps = uint(reps)
+			uReps := uint(reps)
+			set.Reps = &uReps
 		} else {
-			set.Reps = 0
+			set.Reps = nil
 		}
 
 		weightStr := r.FormValue("weight")
 		if weightStr != "" {
-			set.Weight, err = strconv.ParseFloat(weightStr, 64)
+			fWeight, err := strconv.ParseFloat(weightStr, 64)
 			if err != nil {
 				showError(w, "Invalid weight: "+err.Error())
 				return
 			}
+			set.Weight = &fWeight
 		} else {
-			set.Weight = 0.0
+			set.Weight = nil
 		}
 
 		durationStr := r.FormValue("duration")
@@ -87,9 +89,10 @@ func postSet(db *database.Database) http.HandlerFunc {
 				showError(w, "Invalid duration: "+err.Error())
 				return
 			}
-			set.Duration = uint(duration)
+			uDuration := uint(duration)
+			set.Duration = &uDuration
 		} else {
-			set.Duration = 0
+			set.Duration = nil
 		}
 
 		err = db.UpdateSet(set)

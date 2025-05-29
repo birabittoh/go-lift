@@ -50,9 +50,9 @@
                   {{ range .Sets }}
                   <tr>
                     <form action="/sets/{{ .ID }}" method="POST" class="set-form">
-                      <td><input type="number" name="reps" value="{{ .Reps }}" min="0" max="99" placeholder="Reps" class="set-input"></td>
-                      <td><input type="number" step="0.5" name="weight" value="{{ .Weight }}" min="0" max="300" placeholder="Weight" class="set-input"></td>
-                      <td><input type="number" name="duration" value="{{ .Duration }}" min="0" max="7200" placeholder="Duration" class="set-input"></td>
+                      <td><input type="number" name="reps" value="{{ .Reps }}" min="1" max="99" placeholder="Reps" class="set-input"></td>
+                      <td><input type="number" step="0.5" name="weight" value="{{ .Weight }}" min="1" max="300" placeholder="Weight" class="set-input"></td>
+                      <td><input type="number" name="duration" value="{{ .Duration }}" min="1" max="7200" placeholder="Duration" class="set-input"></td>
                       <td width="1">
                         <button type="submit" class="set-submit">💾</button>
                       </td>

@@ -301,9 +301,19 @@ func (db *Database) NewSet(item *ExerciseItem) (*Set, error) {
 		return nil, fmt.Errorf("exercise item ID is required for new set")
 	}
 
+	l := len(item.Sets)
+
 	set := &Set{
 		ExerciseItemID: item.ID,
-		OrderIndex:     len(item.Sets),
+		OrderIndex:     l,
+	}
+
+	if l > 0 {
+		lastSet := item.Sets[l-1]
+
+		set.Weight = lastSet.Weight
+		set.Reps = lastSet.Reps
+		set.Duration = lastSet.Duration
 	}
 
 	if err := db.Create(set).Error; err != nil {
@@ -332,8 +342,19 @@ func (db *Database) UpdateSet(set *Set) error {
 		return fmt.Errorf("set ID is required for update")
 	}
 
-	if set.Reps > 99 || set.Weight < 0 || set.Weight > 300 || set.Duration > 7200 {
-		return fmt.Errorf("invalid set values: reps=%d, weight=%.2f, duration=%d", set.Reps, set.Weight, set.Duration)
+	// Check if reps is valid
+	if set.Reps != nil && (*set.Reps == 0 || *set.Reps > 99) {
+		return fmt.Errorf("invalid reps value: %v", *set.Reps)
+	}
+
+	// Check if weight is valid
+	if set.Weight != nil && (*set.Weight <= 0 || *set.Weight > 300) {
+		return fmt.Errorf("invalid weight value: %v", *set.Weight)
+	}
+
+	// Check if duration is valid
+	if set.Duration != nil && (*set.Duration == 0 || *set.Duration > 7200) {
+		return fmt.Errorf("invalid duration value: %v", *set.Duration)
 	}
 
 	if err := db.Save(set).Error; err != nil {

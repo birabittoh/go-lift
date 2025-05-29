@@ -105,9 +105,9 @@ type ExerciseItem struct {
 type Set struct {
 	ID             uint      `gorm:"primaryKey" json:"id"`
 	ExerciseItemID uint      `gorm:"not null;constraint:OnDelete:CASCADE" json:"exerciseItemId"`
-	Reps           uint      `gorm:"default:0" json:"reps"`
-	Weight         float64   `gorm:"default:0" json:"weight"`
-	Duration       uint      `gorm:"default:0" json:"duration"` // In seconds
+	Reps           *uint     `json:"reps"`
+	Weight         *float64  `json:"weight"`
+	Duration       *uint     `json:"duration"` // In seconds
 	OrderIndex     int       `gorm:"not null;default:0" json:"orderIndex"`
 	CreatedAt      time.Time `json:"createdAt"`
 	UpdatedAt      time.Time `json:"updatedAt"`
@@ -163,9 +163,9 @@ type RecordSet struct {
 	ID                   uint      `gorm:"primaryKey" json:"id"`
 	RecordExerciseItemID uint      `gorm:"not null;constraint:OnDelete:CASCADE" json:"recordExerciseItemId"`
 	SetID                uint      `gorm:"not null;constraint:OnDelete:CASCADE" json:"setId"`
-	ActualReps           int       `gorm:"default:0" json:"actualReps"`
-	ActualWeight         float64   `gorm:"default:0" json:"actualWeight"`
-	ActualDuration       int       `gorm:"default:0" json:"actualDuration"` // In seconds
+	ActualReps           *uint     `json:"actualReps"`
+	ActualWeight         *float64  `json:"actualWeight"`
+	ActualDuration       *uint     `json:"actualDuration"` // In seconds
 	CompletedAt          time.Time `gorm:"not null" json:"completedAt"`
 	OrderIndex           int       `gorm:"not null;default:0" json:"orderIndex"`
 	CreatedAt            time.Time `json:"createdAt"`
