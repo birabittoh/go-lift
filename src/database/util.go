@@ -228,7 +228,18 @@ func (db *Database) DeleteExerciseItem(item *ExerciseItem) (uint, error) {
 		return 0, fmt.Errorf("failed to delete exercise item: %w", err)
 	}
 
-	return item.RoutineItem.RoutineID, nil
+	routineItem, err := db.GetRoutineItemByID(item.RoutineItemID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to retrieve routine item: %w", err)
+	}
+
+	if len(routineItem.ExerciseItems) == 0 {
+		if err := db.Delete(routineItem).Error; err != nil {
+			return 0, fmt.Errorf("failed to delete routine item after removing last exercise item: %w", err)
+		}
+	}
+
+	return routineItem.RoutineID, nil
 }
 
 func (db *Database) GetExerciseItemByID(id uint) (*ExerciseItem, error) {

@@ -1,35 +1,34 @@
 {{ define "base" }}<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Go Lift - {{ capitalize .Page }}</title>
-    <link rel="stylesheet" href="/static/styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Go Lift - {{ capitalize .Page }}</title>
+  <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
-    <div class="container">
-        <nav class="sidebar">
-            <a href="/" class="nav-link {{ if eq .Page "home" }}active{{ end }}">
-                <span class="nav-icon">🏠</span>
-                <span>Home</span>
-            </a>
-            <a href="/routines" class="nav-link {{ if eq .Page "routines" }}active{{ end }}">
-                <span class="nav-icon">📝</span>
-                <span>Routines</span>
-            </a>
-            <a href="/workouts" class="nav-link {{ if eq .Page "workouts" }}active{{ end }}">
-                <span class="nav-icon">💪</span>
-                <span>Workouts</span>
-            </a>
-            <a href="/profile" class="nav-link {{ if eq .Page "profile" }}active{{ end }}">
-                <span class="nav-icon">👤</span>
-                <span>Profile</span>
-            </a>
-        </nav>
-
-        <main class="content">
-            {{ template "body" . }}
-        </main>
-    </div>
+  <div class="container">
+    <nav class="sidebar">
+      <a href="/" class="nav-link {{ if eq .Page "home" }}active{{ end }}">
+        <span class="nav-icon">🏠</span>
+        <span>Home</span>
+      </a>
+      <a href="/routines" class="nav-link {{ if eq .Page "routines" }}active{{ end }}">
+        <span class="nav-icon">📝</span>
+        <span>Routines</span>
+      </a>
+      <a href="/workouts" class="nav-link {{ if eq .Page "workouts" }}active{{ end }}">
+        <span class="nav-icon">💪</span>
+        <span>Workouts</span>
+      </a>
+      <a href="/profile" class="nav-link {{ if eq .Page "profile" }}active{{ end }}">
+        <span class="nav-icon">👤</span>
+        <span>Profile</span>
+      </a>
+    </nav>
+    <main class="content">
+      {{ template "body" . }}
+    </main>
+  </div>
 </body>
 </html>{{ end }}

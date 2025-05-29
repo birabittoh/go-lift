@@ -1,42 +1,39 @@
 {{ define "body" }}
 {{ with index .Users 0 }}
-<h1>Edit Profile</h1>
 <div class="container">
+  <div class="content">
+    <h1>Edit Profile</h1>
     <form id="profileForm" action="/profile/edit" method="POST">
-        <div class="button-group">
-            <input type="submit" id="saveBtn" value="Save" />
+      <div class="button-group">
+        <input type="submit" id="saveBtn" class="primary-button" value="Save" />
+      </div>
+      <div class="form-group">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" value="{{ .Name }}">
+      </div>
+      <div class="form-group">
+        <label>Gender:</label>
+        <div class="radio-group">
+          <input type="radio" id="male" name="isFemale" value="false" {{ if not .IsFemale }}checked{{ end }}>
+          <label for="male">Male</label>
+          <input type="radio" id="female" name="isFemale" value="true" {{ if .IsFemale }}checked{{ end }}>
+          <label for="female">Female</label>
         </div>
-
-        <div class="form-group">
-            <label for="name">Name:</label>
-            <input type="text" id="name" name="name" value="{{ .Name }}">
-        </div>
-        
-        <div class="form-group">
-            <label>Gender:</label>
-            <div class="radio-group">
-                <input type="radio" id="male" name="isFemale" value="false" {{ if not .IsFemale }}checked{{ end }}>
-                <label for="male">Male</label>
-                <input type="radio" id="female" name="isFemale" value="true" {{ if .IsFemale }}checked{{ end }}>
-                <label for="female">Female</label>
-            </div>
-        </div>
-        
-        <div class="form-group">
-            <label for="height">Height (cm):</label>
-            <input type="number" id="height" name="height" value="{{ .Height }}" step="0.1">
-        </div>
-        
-        <div class="form-group">
-            <label for="weight">Weight (kg):</label>
-            <input type="number" id="weight" name="weight" value="{{ .Weight }}" step="0.1">
-        </div>
-        
-        <div class="form-group">
-            <label for="birthDate">Birth Date:</label>
-            <input type="date" id="birthDate" name="birthDate" value="{{ formatBirthDate .BirthDate }}">
-        </div>
+      </div>
+      <div class="form-group">
+        <label for="height">Height (cm):</label>
+        <input type="number" id="height" name="height" value="{{ .Height }}" step="0.1">
+      </div>
+      <div class="form-group">
+        <label for="weight">Weight (kg):</label>
+        <input type="number" id="weight" name="weight" value="{{ .Weight }}" step="0.1">
+      </div>
+      <div class="form-group">
+        <label for="birthDate">Birth Date:</label>
+        <input type="date" id="birthDate" name="birthDate" value="{{ formatBirthDate .BirthDate }}">
+      </div>
     </form>
+  </div>
 </div>
 {{ end }}
 {{ end }}

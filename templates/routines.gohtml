@@ -1,36 +1,34 @@
 {{ define "body" }}
-    <div class="container">
-        <div class="content">
-            <h1>Routines</h1>
-            
-            <div class="button-group">
-                <form action="/routines/new" method="POST">
-                    <input type="submit" value="New">
-                </form>
-            </div>
-            
-            <div>
-            {{ if .Routines }}
-                {{ range .Routines }}
-                    <div style="background-color: var(--sidebar-bg); padding: 15px; margin-bottom: 15px; border-radius: 8px;">
-                        <div>
-                            <h5 style="margin-top: 0; margin-bottom: 8px;">{{ .Name }}</h5>
-                            <p style="margin-bottom: 15px;">{{ .Description }}</p>
-                            <div class="button-group" style="display: flex;">
-                                <form action="/routines/{{ .ID }}" method="GET">
-                                    <input class="primary-button" type="submit" value="📝" />
-                                </form>
-                                <form action="/routines/{{ .ID }}/delete" method="POST">
-                                    <input class="error-button" type="submit" value="🗑️" />
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                {{ end }}
-            {{ else }}
-                <p style="text-align: center; padding: 20px;">No routines found.</p>
-            {{ end }}
-            </div>
-        </div>
+<div class="container">
+  <div class="content">
+    <h1>Routines</h1>
+    <div class="button-group">
+      <form action="/routines/new" method="POST">
+        <input type="submit" class="primary-button" value="New">
+      </form>
     </div>
+    <div>
+      {{ if .Routines }}
+        {{ range .Routines }}
+        <div class="routine-item">
+          <div>
+            <h5 class="routine-name">{{ .Name }}</h5>
+            <p class="routine-description">{{ .Description }}</p>
+            <div class="button-group" style="display: flex;">
+              <form action="/routines/{{ .ID }}" method="GET">
+                <input class="primary-button" type="submit" value="📝" />
+              </form>
+              <form action="/routines/{{ .ID }}/delete" method="POST">
+                <input class="error-button" type="submit" value="🗑️" />
+              </form>
+            </div>
+          </div>
+        </div>
+        {{ end }}
+      {{ else }}
+        <p class="empty-message">No routines found.</p>
+      {{ end }}
+    </div>
+  </div>
+</div>
 {{ end }}
