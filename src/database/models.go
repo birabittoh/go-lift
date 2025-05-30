@@ -78,7 +78,7 @@ type Routine struct {
 	UpdatedAt   time.Time `json:"updatedAt"`
 
 	RoutineItems []RoutineItem `gorm:"foreignKey:RoutineID;constraint:OnDelete:CASCADE" json:"routineItems"`
-	Days         []Day         `gorm:"many2many:routine_days;" json:"days"`
+	Days         []Day         `gorm:"many2many:routine_days;constraint:OnDelete:CASCADE;" json:"days"`
 }
 
 // RoutineItem represents a group of exercises (can be a single exercise or superset)
