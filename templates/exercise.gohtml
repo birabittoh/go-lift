@@ -1,43 +1,39 @@
 {{ define "body" }}
-<div class="container">
-  <div class="content">
-    {{ with index .Exercises 0 }}
-    <h1>{{ .Name }}</h1>
-    <div class="exercise-images">
-      {{ range .Images }}
-      <img src="{{ . }}" alt="Exercise image">
-      {{ end }}
-    </div>
-    <table>
-      <tr>
-        <th>Equipment</th>
-        <td>{{ coalesce .Equipment "none" }}</td>
-      </tr>
-      <tr>
-        <th>Primary Muscles</th>
-        <td>{{ .PrimaryMuscles }}</td>
-      </tr>
-      <tr>
-        <th>Secondary Muscles</th>
-        <td>{{ coalesce .SecondaryMuscles "none" }}</td>
-      </tr>
-      <tr>
-        <th>Force</th>
-        <td>{{ .Force }}</td>
-      </tr>
-    </table>
-    <h2>Instructions</h2>
-    <ol>
-      {{ range .Instructions }}
-      <li>{{ . }}</li>
-      {{ end }}
-    </ol>
-    <form method="POST" action="/exercises/{{ $.ID }}/{{ .ID }}">
-      <div class="form-group">
-        <input type="submit" class="primary-button" value="Add to Routine">
-      </div>
-    </form>
-    {{ end }}
-  </div>
+{{ with index .Exercises 0 }}
+<h1>{{ .Name }}</h1>
+<div class="exercise-images">
+  {{ range .Images }}
+  <img src="{{ . }}" alt="Exercise image">
+  {{ end }}
 </div>
+<table>
+  <tr>
+    <th>Equipment</th>
+    <td>{{ coalesce .Equipment "none" }}</td>
+  </tr>
+  <tr>
+    <th>Primary Muscles</th>
+    <td>{{ .PrimaryMuscles }}</td>
+  </tr>
+  <tr>
+    <th>Secondary Muscles</th>
+    <td>{{ coalesce .SecondaryMuscles "none" }}</td>
+  </tr>
+  <tr>
+    <th>Force</th>
+    <td>{{ .Force }}</td>
+  </tr>
+</table>
+<h2>Instructions</h2>
+<ol>
+  {{ range .Instructions }}
+  <li>{{ . }}</li>
+  {{ end }}
+</ol>
+<form method="POST" action="/exercises/{{ $.ID }}/{{ .ID }}">
+  <div class="form-group">
+    <input type="submit" class="primary-button" value="Add to Routine">
+  </div>
+</form>
+{{ end }}
 {{ end }}

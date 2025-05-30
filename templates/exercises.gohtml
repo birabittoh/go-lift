@@ -1,36 +1,30 @@
 {{ define "body" }}
-<div class="container">
-  <div class="content">
-    <h1>Exercises</h1>
-    <p>Use Ctrl+F to search for exercises.</p>
-    <table>
-      <thead>
-        <tr>
-          <td>Name</td>
-          <td>Equipment</td>
-          <td>Muscles</td>
-          <td>Force</td>
-          <td>Category</td>
-          <td>Actions</td>
-        </tr>
-      </thead>
-      <tbody>
-        {{ range .Exercises }}
-        <tr>
-          <td>{{ .Name }}</td>
-          <td>{{ coalesce .Equipment "none" }}</td>
-          <td>{{ .PrimaryMuscles }}</td>
-          <td>{{ coalesce .Force "-" }}</td>
-          <td>{{ .Category }}</td>
-          <td>
-            <form method="GET" action="/exercises/{{ $.ID }}/{{ .ID }}">
-              <input type="submit" title="Details" class="primary-button" value="➡️" />
-            </form>
-          </td>
-        </tr>
-        {{ end }}
-      </tbody>
-    </table>
-  </div>
-</div>
+<h1>Exercises</h1>
+<p>Use Ctrl+F to search for exercises.</p>
+<table>
+  <thead>
+    <tr>
+      <td>Name</td>
+      <td>Muscles</td>
+      <td>Force</td>
+      <td>Category</td>
+      <td>Actions</td>
+    </tr>
+  </thead>
+  <tbody>
+    {{ range .Exercises }}
+    <tr>
+      <td>{{ .Name }}</td>
+      <td>{{ .PrimaryMuscles }}</td>
+      <td>{{ coalesce .Force "-" }}</td>
+      <td>{{ .Category }}</td>
+      <td>
+        <form method="GET" action="/exercises/{{ $.ID }}/{{ .ID }}">
+          <input type="submit" title="Details" class="primary-button" value="➡️" />
+        </form>
+      </td>
+    </tr>
+    {{ end }}
+  </tbody>
+</table>
 {{ end }}
