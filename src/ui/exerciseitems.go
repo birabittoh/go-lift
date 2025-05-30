@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/birabittoh/go-lift/src/database"
+	g "github.com/birabittoh/go-lift/src/globals"
 )
 
 func postAddExercise(db *database.Database) http.HandlerFunc {
@@ -15,7 +16,7 @@ func postAddExercise(db *database.Database) http.HandlerFunc {
 			return
 		}
 
-		routineItemId, err := getIDFromPath(r)
+		routineItemId, err := g.GetIDFromPath(r)
 		if err != nil {
 			showError(w, "Invalid routine item ID: "+err.Error())
 			return
@@ -56,7 +57,7 @@ func postExerciseItemDelete(db *database.Database) http.HandlerFunc {
 			return
 		}
 
-		itemID, err := getIDFromPath(r)
+		itemID, err := g.GetIDFromPath(r)
 		if err != nil {
 			showError(w, "Invalid exercise item ID: "+err.Error())
 			return
@@ -85,7 +86,7 @@ func postExerciseItem(db *database.Database) http.HandlerFunc {
 			return
 		}
 
-		itemID, err := getIDFromPath(r)
+		itemID, err := g.GetIDFromPath(r)
 		if err != nil {
 			showError(w, "Invalid exercise item ID: "+err.Error())
 			return

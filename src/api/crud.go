@@ -6,13 +6,14 @@ import (
 	"strconv"
 
 	"github.com/birabittoh/go-lift/src/database"
+	g "github.com/birabittoh/go-lift/src/globals"
 	"gorm.io/gorm"
 )
 
 // User handlers
 func getUserHandler(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		id, err := getIDFromPath(r)
+		id, err := g.GetIDFromPath(r)
 		if err != nil {
 			jsonError(w, http.StatusBadRequest, "Invalid user ID")
 			return
@@ -33,7 +34,7 @@ func getUserHandler(db *database.Database) http.HandlerFunc {
 
 func updateUserHandler(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		id, err := getIDFromPath(r)
+		id, err := g.GetIDFromPath(r)
 		if err != nil {
 			jsonError(w, http.StatusBadRequest, "Invalid user ID")
 			return
@@ -98,7 +99,7 @@ func getRoutinesHandler(db *database.Database) http.HandlerFunc {
 
 func getRoutineHandler(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		id, err := getIDFromPath(r)
+		id, err := g.GetIDFromPath(r)
 		if err != nil {
 			jsonError(w, http.StatusBadRequest, "Invalid routine ID")
 			return
@@ -140,7 +141,7 @@ func createRoutineHandler(db *database.Database) http.HandlerFunc {
 
 func updateRoutineHandler(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		id, err := getIDFromPath(r)
+		id, err := g.GetIDFromPath(r)
 		if err != nil {
 			jsonError(w, http.StatusBadRequest, "Invalid routine ID")
 			return
@@ -167,7 +168,7 @@ func updateRoutineHandler(db *database.Database) http.HandlerFunc {
 
 func deleteRoutineHandler(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		id, err := getIDFromPath(r)
+		id, err := g.GetIDFromPath(r)
 		if err != nil {
 			jsonError(w, http.StatusBadRequest, "Invalid routine ID")
 			return
@@ -209,7 +210,7 @@ func getRecordRoutinesHandler(db *database.Database) http.HandlerFunc {
 
 func getRecordRoutineHandler(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		id, err := getIDFromPath(r)
+		id, err := g.GetIDFromPath(r)
 		if err != nil {
 			jsonError(w, http.StatusBadRequest, "Invalid record ID")
 			return
@@ -253,7 +254,7 @@ func createRecordRoutineHandler(db *database.Database) http.HandlerFunc {
 
 func updateRecordRoutineHandler(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		id, err := getIDFromPath(r)
+		id, err := g.GetIDFromPath(r)
 		if err != nil {
 			jsonError(w, http.StatusBadRequest, "Invalid record ID")
 			return
@@ -277,7 +278,7 @@ func updateRecordRoutineHandler(db *database.Database) http.HandlerFunc {
 
 func deleteRecordRoutineHandler(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		id, err := getIDFromPath(r)
+		id, err := g.GetIDFromPath(r)
 		if err != nil {
 			jsonError(w, http.StatusBadRequest, "Invalid record ID")
 			return

@@ -15,6 +15,12 @@ type Database struct {
 	*gorm.DB
 }
 
+// Day model represents a week day
+type Day struct {
+	ID   uint   `gorm:"primaryKey" json:"id"`
+	Name string `gorm:"size:10;not null;uniqueIndex" json:"name"` // e.g., "Monday"
+}
+
 // User model - kept as is since it's not directly related to routines
 type User struct {
 	ID        uint           `gorm:"primaryKey" json:"id"`
@@ -72,6 +78,7 @@ type Routine struct {
 	UpdatedAt   time.Time `json:"updatedAt"`
 
 	RoutineItems []RoutineItem `gorm:"foreignKey:RoutineID;constraint:OnDelete:CASCADE" json:"routineItems"`
+	Days         []Day         `gorm:"many2many:routine_days;" json:"days"`
 }
 
 // RoutineItem represents a group of exercises (can be a single exercise or superset)
@@ -92,6 +99,7 @@ type ExerciseItem struct {
 	RoutineItemID uint      `gorm:"not null;constraint:OnDelete:CASCADE;uniqueIndex:idx_routineitem_exercise" json:"routineItemId"`
 	ExerciseID    string    `gorm:"not null;constraint:OnDelete:CASCADE;uniqueIndex:idx_routineitem_exercise" json:"exerciseId"`
 	RestTime      uint      `gorm:"not null;default:0" json:"restTime"` // In seconds
+	Notes         string    `gorm:"size:500" json:"notes"`
 	OrderIndex    int       `gorm:"not null;default:0" json:"orderIndex"`
 	CreatedAt     time.Time `json:"createdAt"`
 	UpdatedAt     time.Time `json:"updatedAt"`
@@ -148,7 +156,8 @@ type RecordExerciseItem struct {
 	ID                  uint      `gorm:"primaryKey" json:"id"`
 	RecordRoutineItemID uint      `gorm:"not null;constraint:OnDelete:CASCADE" json:"recordRoutineItemId"`
 	ExerciseItemID      uint      `gorm:"not null;constraint:OnDelete:CASCADE" json:"exerciseItemId"`
-	ActualRestTime      *int      `json:"actualRestTime"` // In seconds, actual rest taken after this exercise
+	RestTime            int       `gorm:"not null;default:0" json:"restTime"` // In seconds, actual rest taken after this exercise
+	Notes               string    `gorm:"size:500" json:"notes"`
 	OrderIndex          int       `gorm:"not null;default:0" json:"orderIndex"`
 	CreatedAt           time.Time `json:"createdAt"`
 	UpdatedAt           time.Time `json:"updatedAt"`
@@ -163,9 +172,9 @@ type RecordSet struct {
 	ID                   uint      `gorm:"primaryKey" json:"id"`
 	RecordExerciseItemID uint      `gorm:"not null;constraint:OnDelete:CASCADE" json:"recordExerciseItemId"`
 	SetID                uint      `gorm:"not null;constraint:OnDelete:CASCADE" json:"setId"`
-	ActualReps           *uint     `json:"actualReps"`
-	ActualWeight         *float64  `json:"actualWeight"`
-	ActualDuration       *uint     `json:"actualDuration"` // In seconds
+	Reps                 *uint     `json:"reps"`
+	Weight               *float64  `json:"weight"`
+	Duration             *uint     `json:"duration"` // In seconds
 	CompletedAt          time.Time `gorm:"not null" json:"completedAt"`
 	OrderIndex           int       `gorm:"not null;default:0" json:"orderIndex"`
 	CreatedAt            time.Time `json:"createdAt"`
@@ -219,6 +228,7 @@ func InitializeDB() (db *Database, err error) {
 
 	// Auto migrate the models in correct order
 	err = conn.AutoMigrate(
+		&Day{},
 		&User{},
 		&HeightMeasurement{},
 		&WeightMeasurement{},

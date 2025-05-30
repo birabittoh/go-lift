@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/birabittoh/go-lift/src/database"
+	g "github.com/birabittoh/go-lift/src/globals"
 )
 
 func postRoutineItemNew(db *database.Database) http.HandlerFunc {
@@ -14,7 +15,7 @@ func postRoutineItemNew(db *database.Database) http.HandlerFunc {
 			return
 		}
 
-		id, err := getIDFromPath(r)
+		id, err := g.GetIDFromPath(r)
 		if err != nil {
 			showError(w, "Invalid routine ID: "+err.Error())
 			return
@@ -33,34 +34,5 @@ func postRoutineItemNew(db *database.Database) http.HandlerFunc {
 		}
 
 		redirect(w, r, fmt.Sprintf("/exercises/%d", item.ID))
-	}
-}
-
-func postRoutineItemDelete(db *database.Database) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
-
-		itemID, err := getIDFromPath(r)
-		if err != nil {
-			showError(w, "Invalid routine item ID: "+err.Error())
-			return
-		}
-
-		item, err := db.GetRoutineItemByID(itemID)
-		if err != nil {
-			showError(w, "Routine item not found")
-			return
-		}
-
-		routineID, err := db.DeleteRoutineItem(item)
-		if err != nil {
-			showError(w, "Failed to delete routine item: "+err.Error())
-			return
-		}
-
-		redirect(w, r, fmt.Sprintf("/routines/%d", routineID))
 	}
 }

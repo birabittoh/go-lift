@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/birabittoh/go-lift/src/database"
+	g "github.com/birabittoh/go-lift/src/globals"
 )
 
 const (
@@ -29,14 +30,17 @@ const (
 var (
 	tmpl    map[string]*template.Template
 	funcMap = template.FuncMap{
-		"capitalize":      capitalize,
+		"capitalize":      g.Capitalize,
 		"coalesce":        coalesce,
 		"formatBirthDate": formatBirthDate,
+		"formatDay":       formatDay,
+		"isChecked":       isChecked,
 	}
 )
 
 type PageData struct {
 	Page      string
+	Days      []database.Day
 	Exercises []database.Exercise
 	Routines  []database.Routine
 	Users     []database.User
@@ -93,7 +97,6 @@ func InitServeMux(s *http.ServeMux, db *database.Database) {
 	s.HandleFunc("POST /routines/{id}", postRoutine(db))                         // edit routine (name, description)
 	s.HandleFunc("POST /routines/{id}/delete", postRoutineDelete(db))            // delete routine
 	s.HandleFunc("POST /routines/{id}/new", postRoutineItemNew(db))              // add new routine item to routine
-	s.HandleFunc("POST /routine-items/{id}/delete", postRoutineItemDelete(db))   // delete routine item
 	s.HandleFunc("POST /exercise-items/{id}/delete", postExerciseItemDelete(db)) // delete exercise item
 	s.HandleFunc("POST /exercise-items/{id}", postExerciseItem(db))              // edit exercise item (restTime)
 	s.HandleFunc("POST /exercise-items/{id}/new", postSetNew(db))                // add new set to exercise item

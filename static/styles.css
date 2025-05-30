@@ -114,7 +114,7 @@ tr:hover {
 .form-group input {
   width: 100%;
   padding: 8px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--sidebar-bg);
   border-radius: 4px;
 }
 
@@ -145,10 +145,6 @@ input[type="submit"] {
   transition: background-color 0.3s;
 }
 
-.primary-button:hover {
-  background-color: darken(var(--nav-active), 10%);
-}
-
 .secondary-button,
 input[type="submit"].secondary-button {
   background: rgba(128, 128, 128, 0.2);
@@ -158,11 +154,6 @@ input[type="submit"].secondary-button {
   padding: 6px 14px;
   cursor: pointer;
   transition: background-color 0.2s;
-}
-
-.secondary-button:hover,
-input[type="submit"].secondary-button:hover {
-  background: rgba(128, 128, 128, 0.3);
 }
 
 .error-button {
@@ -203,6 +194,8 @@ input[disabled] {
   border-radius: 6px;
   background-color: rgba(128, 128, 128, 0.1);
   justify-content: space-between;
+  flex-direction: column;
+  padding: 5px !important;
 }
 
 input {
@@ -221,6 +214,7 @@ input {
   width: 100%;
   border-collapse: collapse;
   margin: auto;
+  margin-top: 10px;
 }
 
 .set-submit {
@@ -252,7 +246,72 @@ input {
   width: 100%;
   padding: 4px;
   border-radius: 4px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--bg-color) !important;
+}
+
+.set-table td,
+.set-table th {
+  text-align: center;
+  width: auto;
+  font-weight: normal;
+}
+
+.exercise-name {
+  margin-top: 0;
+  margin-bottom: 8px;
+  color: var(--nav-active);
+}
+
+input[type="text"],
+input[type="number"],
+input[type="date"],
+input[type="time"] {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--sidebar-bg);
+  border-radius: 4px;
+  box-sizing: border-box;
+  background-color: var(--sidebar-bg);
+  color: var(--text-color);
+}
+
+.delete-form {
+  margin: 0;
+  text-align: right;
+  align-content: end;
+}
+
+.day-selector {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 10px;
+  margin: 15px 0;
+}
+.day-checkbox {
+  display: none;
+}
+.day-label {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 4px;
+  width: 40px;
+  text-align: center;
+  background-color: var(--sidebar-bg);
+  cursor: pointer;
+  font-weight: bold;
+  text-transform: uppercase;
+  padding: 5px 10px;
+}
+.day-label strong {
+  font-size: 14px;
+  max-width: 3ch;
+  overflow: hidden;
+}
+.day-checkbox:checked + .day-label {
+  background-color: var(--nav-active);
+  color: white;
 }
 
 @media (max-width: 768px) { /* Mobile only */
@@ -279,22 +338,9 @@ input {
     margin-bottom: 4px;
   }
 
-  .set-table td,
-  .set-table th {
-    text-align: center;
-    width: auto;
-    font-weight: normal;
-  }
-
   .exercise-images {
     flex-direction: column;
     align-items: center;
-  }
-
-  .exercise-item {
-    flex-direction: column;
-    padding: 5px !important;
-
   }
 
   .exercise-details {
@@ -329,18 +375,6 @@ input {
   .exercise-details {
     flex: 1;
     margin-left: 16px;
-  }
-
-  .exercise-name {
-    margin-top: 0;
-    margin-bottom: 8px;
-    color: var(--nav-active);
-  }
-
-  .delete-form {
-    margin: 0;
-    text-align: right;
-    align-content: end;
   }
 
   .empty-message {

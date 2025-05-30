@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/birabittoh/go-lift/src/database"
+	g "github.com/birabittoh/go-lift/src/globals"
 )
 
 func postSetNew(db *database.Database) http.HandlerFunc {
@@ -15,7 +16,7 @@ func postSetNew(db *database.Database) http.HandlerFunc {
 			return
 		}
 
-		itemID, err := getIDFromPath(r)
+		itemID, err := g.GetIDFromPath(r)
 		if err != nil {
 			showError(w, "Invalid exercise item ID: "+err.Error())
 			return
@@ -44,7 +45,7 @@ func postSet(db *database.Database) http.HandlerFunc {
 			return
 		}
 
-		setID, err := getIDFromPath(r)
+		setID, err := g.GetIDFromPath(r)
 		if err != nil {
 			showError(w, "Invalid set ID: "+err.Error())
 			return
@@ -112,7 +113,7 @@ func postSetDelete(db *database.Database) http.HandlerFunc {
 			return
 		}
 
-		setID, err := getIDFromPath(r)
+		setID, err := g.GetIDFromPath(r)
 		if err != nil {
 			showError(w, "Invalid set ID: "+err.Error())
 			return

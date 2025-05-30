@@ -4,11 +4,12 @@ import (
 	"net/http"
 
 	"github.com/birabittoh/go-lift/src/database"
+	g "github.com/birabittoh/go-lift/src/globals"
 )
 
 func getExercises(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		routineItemId, err := getIDFromPath(r)
+		routineItemId, err := g.GetIDFromPath(r)
 		if err != nil {
 			showError(w, "Routine item ID is required")
 			return
@@ -44,7 +45,7 @@ func getExercise(db *database.Database) http.HandlerFunc {
 			return
 		}
 
-		routineItemId, err := getIDFromPath(r)
+		routineItemId, err := g.GetIDFromPath(r)
 		if err != nil {
 			showError(w, "Routine item ID is required")
 			return

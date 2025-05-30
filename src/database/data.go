@@ -4,7 +4,10 @@ import (
 	"log"
 )
 
-var defaultUserList = []User{{Name: "Admin"}}
+var (
+	defaultUserList = []User{{Name: "User"}}
+	weekDays        = []string{"monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"}
+)
 
 // CheckInitialData ensures that all necessary initial data is in the database
 func (db *Database) CheckInitialData() (err error) {

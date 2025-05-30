@@ -3,7 +3,17 @@ package database
 import (
 	"fmt"
 	"time"
+
+	g "github.com/birabittoh/go-lift/src/globals"
 )
+
+func (db *Database) GetDays() []Day {
+	var days []Day
+	for i, dayName := range weekDays {
+		days = append(days, Day{ID: uint(i + 1), Name: g.Capitalize(dayName)})
+	}
+	return days
+}
 
 func (db *Database) GetExercises() ([]Exercise, error) {
 	var exercises []Exercise
@@ -93,10 +103,7 @@ func (db *Database) UpdateUser(user *User) error {
 func (db *Database) GetRoutines() ([]Routine, error) {
 	var routines []Routine
 	err := db.
-		Preload("RoutineItems").
-		Preload("RoutineItems.ExerciseItems").
-		Preload("RoutineItems.ExerciseItems.Exercise").
-		Preload("RoutineItems.ExerciseItems.Sets").
+		Preload("Days").
 		Find(&routines).Error
 	if err != nil {
 		return nil, err
@@ -108,6 +115,7 @@ func (db *Database) GetRoutines() ([]Routine, error) {
 func (db *Database) GetRoutineByID(id uint) (*Routine, error) {
 	var routine Routine
 	err := db.
+		Preload("Days").
 		Preload("RoutineItems").
 		Preload("RoutineItems.ExerciseItems").
 		Preload("RoutineItems.ExerciseItems.Exercise").
@@ -143,6 +151,18 @@ func (db *Database) UpdateRoutine(routine *Routine) error {
 
 	if err := db.Save(routine).Error; err != nil {
 		return fmt.Errorf("failed to update routine: %w", err)
+	}
+
+	return nil
+}
+
+func (db *Database) UpdateRoutineDays(routine *Routine, days []Day) error {
+	if routine.ID == 0 {
+		return fmt.Errorf("routine ID is required for updating days")
+	}
+
+	if err := db.Model(routine).Association("Days").Replace(days); err != nil {
+		return fmt.Errorf("failed to update routine days: %w", err)
 	}
 
 	return nil
