@@ -40,13 +40,24 @@ var (
 )
 
 type PageData struct {
-	Page      string
-	Days      []database.Day
-	Exercises []database.Exercise
-	Routines  []database.Routine
-	Users     []database.User
-	Message   string
-	ID        uint
+	Page           string
+	Days           []database.Day
+	Exercises      []database.Exercise
+	Routines       []database.Routine
+	RecordRoutines []database.RecordRoutine
+	CurrentWorkout *database.RecordRoutine
+	User           *database.User
+	Message        string
+	ID             uint
+}
+
+func getPageData(db *database.Database, page string) (pageData *PageData, err error) {
+	pageData = &PageData{
+		Page:           page,
+		CurrentWorkout: db.GetCurrentWorkout(),
+	}
+
+	return
 }
 
 func parseTemplate(path string) *template.Template {
@@ -84,29 +95,30 @@ func InitServeMux(s *http.ServeMux, db *database.Database) {
 	tmpl[profilePath] = parseTemplate(profilePath)
 	tmpl[profileEditPath] = parseTemplate(profileEditPath)
 
-	s.HandleFunc("GET /", getHome)                                    // home page
+	s.HandleFunc("GET /", getHome(db))                                // home page
 	s.HandleFunc("GET /exercises/{id}", getExercises(db))             // select exercise for routine item id
 	s.HandleFunc("GET /exercises/{id}/{exerciseId}", getExercise(db)) // confirm exercise for routine item id
 	s.HandleFunc("GET /routines", getRoutines(db))                    // list all routines
 	s.HandleFunc("GET /routines/{id}", getRoutine(db))                // edit routine
-	s.HandleFunc("GET /workouts", getWorkouts(db))                    // list all workouts
 	s.HandleFunc("GET /profile", getProfile(db))                      // user profile
 	s.HandleFunc("GET /profile/edit", getProfileEdit(db))             // edit user profile
 
-	s.HandleFunc("POST /exercises/{id}/{exerciseId}", postAddExercise(db))       // add exercise item to routine item
-	s.HandleFunc("POST /routines/new", postRoutineNew(db))                       // add new routine
-	s.HandleFunc("POST /routines/{id}", postRoutine(db))                         // edit routine (name, description)
-	s.HandleFunc("POST /routines/{id}/delete", postRoutineDelete(db))            // delete routine
-	s.HandleFunc("POST /routines/{id}/new", postRoutineItemNew(db))              // add new routine item to routine
-	s.HandleFunc("POST /exercise-items/{id}/up", postExerciseItemUp(db))         // move exercise item up
-	s.HandleFunc("POST /exercise-items/{id}/down", postExerciseItemDown(db))     // move exercise item down
-	s.HandleFunc("POST /routine-items/{id}/up", postRoutineItemUp(db))           // move routine item up
-	s.HandleFunc("POST /routine-items/{id}/down", postRoutineItemDown(db))       // move routine item down
-	s.HandleFunc("POST /exercise-items/{id}/delete", postExerciseItemDelete(db)) // delete exercise item
-	s.HandleFunc("POST /exercise-items/{id}", postExerciseItem(db))              // edit exercise item (restTime, sets)
-	s.HandleFunc("POST /exercise-items/{id}/new", postSetNew(db))                // add new set to exercise item
-	s.HandleFunc("POST /sets/{id}/delete", postSetDelete(db))                    // delete set
-	s.HandleFunc("POST /profile/edit", postProfileEdit(db))                      // edit user profile
+	s.HandleFunc("POST /exercises/{id}/{exerciseId}", postAddExercise(db))          // add exercise item to routine item
+	s.HandleFunc("POST /routines/new", postAddRoutines(db))                         // add new routine
+	s.HandleFunc("POST /routines/{id}", postRoutines(db))                           // edit routine (name, description)
+	s.HandleFunc("POST /routines/{id}/delete", postRoutinesDelete(db))              // delete routine
+	s.HandleFunc("POST /routines/{id}/new", postAddRoutineItems(db))                // add new routine item to routine
+	s.HandleFunc("POST /routines/{id}/start", postAddRecordRoutine(db))             // add new record routine
+	s.HandleFunc("POST /record-routines/{id}/delete", postRecordRoutinesDelete(db)) // delete record routine
+	s.HandleFunc("POST /exercise-items/{id}/up", postExerciseItemsUp(db))           // move exercise item up
+	s.HandleFunc("POST /exercise-items/{id}/down", postExerciseItemsDown(db))       // move exercise item down
+	s.HandleFunc("POST /routine-items/{id}/up", postRoutineItemsUp(db))             // move routine item up
+	s.HandleFunc("POST /routine-items/{id}/down", postRoutineItemsDown(db))         // move routine item down
+	s.HandleFunc("POST /exercise-items/{id}/delete", postExerciseItemsDelete(db))   // delete exercise item
+	s.HandleFunc("POST /exercise-items/{id}", postExerciseItems(db))                // edit exercise item (restTime, sets)
+	s.HandleFunc("POST /exercise-items/{id}/new", postAddSet(db))                   // add new set to exercise item
+	s.HandleFunc("POST /sets/{id}/delete", postSetsDelete(db))                      // delete set
+	s.HandleFunc("POST /profile/edit", postProfileEdit(db))                         // edit user profile
 
 	s.HandleFunc("GET /static/", func(w http.ResponseWriter, r *http.Request) {
 		http.StripPrefix("/static/", http.FileServer(http.Dir("static"))).ServeHTTP(w, r)

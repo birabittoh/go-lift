@@ -17,9 +17,11 @@
         {{ end }}
       </div>
       <div class="button-group" style="display: flex;">
-        <form action="/routines/{{ .ID }}/start" method="GET">
+        {{ if not $.CurrentWorkout }}
+        <form action="/routines/{{ .ID }}/start" method="POST">
           <input class="primary-button" type="submit" value="🏋️‍♂️" />
         </form>
+        {{ end }}
         <form action="/routines/{{ .ID }}" method="GET">
           <input class="primary-button" type="submit" value="📝" />
         </form>

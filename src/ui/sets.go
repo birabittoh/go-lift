@@ -8,7 +8,7 @@ import (
 	g "github.com/birabittoh/go-lift/src/globals"
 )
 
-func postSetNew(db *database.Database) http.HandlerFunc {
+func postAddSet(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -37,7 +37,7 @@ func postSetNew(db *database.Database) http.HandlerFunc {
 	}
 }
 
-func postSetDelete(db *database.Database) http.HandlerFunc {
+func postSetsDelete(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)

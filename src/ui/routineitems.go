@@ -8,7 +8,7 @@ import (
 	g "github.com/birabittoh/go-lift/src/globals"
 )
 
-func postRoutineItemNew(db *database.Database) http.HandlerFunc {
+func postAddRoutineItems(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -37,7 +37,7 @@ func postRoutineItemNew(db *database.Database) http.HandlerFunc {
 	}
 }
 
-func postRoutineItemUp(db *database.Database) http.HandlerFunc {
+func postRoutineItemsUp(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -71,7 +71,7 @@ func postRoutineItemUp(db *database.Database) http.HandlerFunc {
 	}
 }
 
-func postRoutineItemDown(db *database.Database) http.HandlerFunc {
+func postRoutineItemsDown(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)

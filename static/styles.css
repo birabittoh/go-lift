@@ -176,6 +176,7 @@ input[type="submit"].secondary-button {
   padding: 4px 8px;
   border-radius: 4px;
   transition: background-color 0.2s;
+  color: var(--text-color);
 }
 
 .delete-button:hover {

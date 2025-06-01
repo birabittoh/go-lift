@@ -50,7 +50,7 @@ func postAddExercise(db *database.Database) http.HandlerFunc {
 	}
 }
 
-func postExerciseItemDelete(db *database.Database) http.HandlerFunc {
+func postExerciseItemsDelete(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -79,7 +79,7 @@ func postExerciseItemDelete(db *database.Database) http.HandlerFunc {
 	}
 }
 
-func postExerciseItemUp(db *database.Database) http.HandlerFunc {
+func postExerciseItemsUp(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -113,7 +113,7 @@ func postExerciseItemUp(db *database.Database) http.HandlerFunc {
 	}
 }
 
-func postExerciseItemDown(db *database.Database) http.HandlerFunc {
+func postExerciseItemsDown(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -147,7 +147,7 @@ func postExerciseItemDown(db *database.Database) http.HandlerFunc {
 	}
 }
 
-func postExerciseItem(db *database.Database) http.HandlerFunc {
+func postExerciseItems(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)

@@ -17,16 +17,28 @@
         <span class="nav-icon">📝</span>
         <span>Routines</span>
       </a>
-      <a href="/workouts" class="nav-link {{ if eq .Page "workouts" }}active{{ end }}">
-        <span class="nav-icon">💪</span>
-        <span>Workouts</span>
-      </a>
       <a href="/profile" class="nav-link {{ if eq .Page "profile" }}active{{ end }}">
         <span class="nav-icon">👤</span>
         <span>Profile</span>
       </a>
     </nav>
     <main class="content">
+      {{ if and .CurrentWorkout (not (eq .Page "workout")) }}
+      <div class="routine-items-container">
+        <div class="routine-item">
+          <h2>Current Workout</h2>
+          Started at {{ .CurrentWorkout.CreatedAt.Format "15:04" }} on {{ .CurrentWorkout.CreatedAt.Format "02 Jan 2006" }}.
+          <div class="exercise-items-list">
+            <form action="/record-routines/{{ .CurrentWorkout.ID }}" method="POST" class="form-group">
+              <input type="submit" class="primary-button" value="Resume" />
+            </form>
+            <form action="/record-routines/{{ .CurrentWorkout.ID }}/delete?page={{ .Page }}" method="POST" class="form-group">
+              <input type="submit" class="delete-button" value="Cancel" />
+            </form>
+          </div>
+        </div>
+      </div>
+      {{ end }}
       {{ template "body" . }}
     </main>
   </div>

@@ -155,7 +155,7 @@ type RecordExerciseItem struct {
 	ID                  uint      `gorm:"primaryKey" json:"id"`
 	RecordRoutineItemID uint      `gorm:"not null;constraint:OnDelete:CASCADE" json:"recordRoutineItemId"`
 	ExerciseItemID      uint      `gorm:"not null;constraint:OnDelete:CASCADE" json:"exerciseItemId"`
-	RestTime            int       `gorm:"not null;default:0" json:"restTime"` // In seconds, actual rest taken after this exercise
+	RestTime            uint      `gorm:"not null;default:0" json:"restTime"` // In seconds, actual rest taken after this exercise
 	Notes               string    `gorm:"size:500" json:"notes"`
 	OrderIndex          int       `gorm:"not null;default:0" json:"orderIndex"`
 	CreatedAt           time.Time `json:"createdAt"`
@@ -168,16 +168,16 @@ type RecordExerciseItem struct {
 
 // RecordSet records completion of an actual set
 type RecordSet struct {
-	ID                   uint      `gorm:"primaryKey" json:"id"`
-	RecordExerciseItemID uint      `gorm:"not null;constraint:OnDelete:CASCADE" json:"recordExerciseItemId"`
-	SetID                uint      `gorm:"not null;constraint:OnDelete:CASCADE" json:"setId"`
-	Reps                 *uint     `json:"reps"`
-	Weight               *float64  `json:"weight"`
-	Duration             *uint     `json:"duration"` // In seconds
-	CompletedAt          time.Time `gorm:"not null" json:"completedAt"`
-	OrderIndex           int       `gorm:"not null;default:0" json:"orderIndex"`
-	CreatedAt            time.Time `json:"createdAt"`
-	UpdatedAt            time.Time `json:"updatedAt"`
+	ID                   uint       `gorm:"primaryKey" json:"id"`
+	RecordExerciseItemID uint       `gorm:"not null;constraint:OnDelete:CASCADE" json:"recordExerciseItemId"`
+	SetID                uint       `gorm:"not null;constraint:OnDelete:CASCADE" json:"setId"`
+	Reps                 *uint      `json:"reps"`
+	Weight               *float64   `json:"weight"`
+	Duration             *uint      `json:"duration"` // In seconds
+	CompletedAt          *time.Time `json:"completedAt"`
+	OrderIndex           int        `gorm:"not null;default:0" json:"orderIndex"`
+	CreatedAt            time.Time  `json:"createdAt"`
+	UpdatedAt            time.Time  `json:"updatedAt"`
 
 	RecordExerciseItem RecordExerciseItem `gorm:"constraint:OnDelete:CASCADE" json:"-"`
 	Set                Set                `gorm:"constraint:OnDelete:CASCADE" json:"set"`

@@ -10,21 +10,32 @@ import (
 
 func getRoutines(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		routines, err := db.GetRoutines()
+		pageData, err := getPageData(db, "routines")
+		if err != nil {
+			showError(w, "Failed to retrieve page data: "+err.Error())
+			return
+		}
+
+		pageData.Routines, err = db.GetRoutines()
 		if err != nil {
 			showError(w, "Failed to retrieve routines: "+err.Error())
 			return
 		}
-		pageData := &PageData{
-			Page:     "routines",
-			Routines: routines,
-		}
+
+		pageData.CurrentWorkout = db.GetCurrentWorkout()
+
 		executeTemplateSafe(w, routinesPath, pageData)
 	}
 }
 
 func getRoutine(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		pageData, err := getPageData(db, "routines")
+		if err != nil {
+			showError(w, "Failed to retrieve page data: "+err.Error())
+			return
+		}
+
 		id, err := g.GetIDFromPath(r)
 		if err != nil {
 			showError(w, "Invalid routine ID: "+err.Error())
@@ -36,16 +47,15 @@ func getRoutine(db *database.Database) http.HandlerFunc {
 			showError(w, "Failed to retrieve routine: "+err.Error())
 			return
 		}
-		pageData := &PageData{
-			Page:     "routines",
-			Routines: []database.Routine{*routine},
-			Days:     db.GetDays(),
-		}
+		pageData.Routines = []database.Routine{*routine}
+
+		pageData.Days = db.GetDays()
+
 		executeTemplateSafe(w, routinePath, pageData)
 	}
 }
 
-func postRoutineNew(db *database.Database) http.HandlerFunc {
+func postAddRoutines(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		routine := &database.Routine{
 			Name:        "New Routine",
@@ -63,7 +73,7 @@ func postRoutineNew(db *database.Database) http.HandlerFunc {
 	}
 }
 
-func postRoutineDelete(db *database.Database) http.HandlerFunc {
+func postRoutinesDelete(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id, err := g.GetIDFromPath(r)
 		if err != nil {
@@ -81,7 +91,7 @@ func postRoutineDelete(db *database.Database) http.HandlerFunc {
 	}
 }
 
-func postRoutine(db *database.Database) http.HandlerFunc {
+func postRoutines(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)

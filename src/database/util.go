@@ -534,3 +534,100 @@ func (db *Database) DeleteSet(set *Set) (uint, error) {
 
 	return set.ExerciseItem.RoutineItem.RoutineID, nil
 }
+
+func (db *Database) GetCurrentWorkout() *RecordRoutine {
+	var record RecordRoutine
+	err := db.
+		Preload("RecordRoutineItems").
+		Preload("RecordRoutineItems.RecordExerciseItems").
+		Preload("RecordRoutineItems.RecordExerciseItems.RecordSets").
+		Where("duration IS NULL").
+		Last(&record).Error
+	if err != nil {
+		return nil
+	}
+
+	return &record
+}
+
+func (db *Database) NewRecordRoutine(routine *Routine) (*RecordRoutine, error) {
+	record := &RecordRoutine{
+		RoutineID: routine.ID,
+	}
+
+	for _, ri := range routine.RoutineItems {
+		recordRoutineItem := RecordRoutineItem{
+			RoutineItemID: ri.ID,
+			OrderIndex:    ri.OrderIndex,
+		}
+
+		for _, ei := range ri.ExerciseItems {
+			recordExerciseItem := RecordExerciseItem{
+				ExerciseItemID:      ei.ID,
+				RecordRoutineItemID: recordRoutineItem.ID,
+				RestTime:            ei.RestTime,
+				Notes:               ei.Notes,
+				OrderIndex:          ei.OrderIndex,
+			}
+
+			for _, set := range ei.Sets {
+				recordSet := RecordSet{
+					SetID:                set.ID,
+					Reps:                 set.Reps,
+					Weight:               set.Weight,
+					Duration:             set.Duration,
+					RecordExerciseItemID: recordExerciseItem.ID,
+				}
+
+				recordExerciseItem.RecordSets = append(recordExerciseItem.RecordSets, recordSet)
+			}
+			recordRoutineItem.RecordExerciseItems = append(recordRoutineItem.RecordExerciseItems, recordExerciseItem)
+		}
+
+		record.RecordRoutineItems = append(record.RecordRoutineItems, recordRoutineItem)
+	}
+
+	if err := db.Create(record).Error; err != nil {
+		return nil, fmt.Errorf("failed to create new record routine: %w", err)
+	}
+
+	return record, nil
+}
+
+func (db *Database) GetRecordRoutineByID(id uint) (*RecordRoutine, error) {
+	var record RecordRoutine
+	err := db.
+		Preload("RecordRoutineItems").
+		Preload("RecordRoutineItems.RecordExerciseItems").
+		Preload("RecordRoutineItems.RecordExerciseItems.RecordSets").
+		First(&record, id).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &record, nil
+}
+
+func (db *Database) DeleteRecordRoutine(recordRoutine *RecordRoutine) error {
+	if recordRoutine.ID == 0 {
+		return fmt.Errorf("record routine ID is required for deletion")
+	}
+
+	if err := db.Delete(recordRoutine).Error; err != nil {
+		return fmt.Errorf("failed to delete record routine: %w", err)
+	}
+
+	return nil
+}
+
+func (db *Database) UpdateRecordRoutine(record *RecordRoutine) error {
+	if record.ID == 0 {
+		return fmt.Errorf("record routine ID is required for update")
+	}
+
+	if err := db.Save(record).Error; err != nil {
+		return fmt.Errorf("failed to update record routine: %w", err)
+	}
+
+	return nil
+}

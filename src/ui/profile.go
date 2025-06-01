@@ -10,32 +10,36 @@ import (
 
 func getProfile(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		user, err := db.GetUserByID(1)
+		pageData, err := getPageData(db, "profile")
+		if err != nil {
+			showError(w, "Failed to retrieve page data: "+err.Error())
+			return
+		}
+
+		pageData.User, err = db.GetUserByID(1)
 		if err != nil {
 			showError(w, "Failed to retrieve profile: "+err.Error())
 			return
 		}
 
-		pageData := &PageData{
-			Page:  "profile",
-			Users: []database.User{*user},
-		}
 		executeTemplateSafe(w, profilePath, pageData)
 	}
 }
 
 func getProfileEdit(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		user, err := db.GetUserByID(1)
+		pageData, err := getPageData(db, "profile")
+		if err != nil {
+			showError(w, "Failed to retrieve page data: "+err.Error())
+			return
+		}
+
+		pageData.User, err = db.GetUserByID(1)
 		if err != nil {
 			showError(w, "Failed to retrieve profile: "+err.Error())
 			return
 		}
 
-		pageData := &PageData{
-			Page:  "profile",
-			Users: []database.User{*user},
-		}
 		executeTemplateSafe(w, profileEditPath, pageData)
 	}
 }

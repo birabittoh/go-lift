@@ -1,0 +1,11 @@
+{{ define "body" }}
+<h1>Are you sure?</h1>
+<p>{{ .Message }}</p>
+<div class="button-group">
+  <form action="{{ .Action }}" method="{{ .Method }}">
+    <input type="submit" class="primary-button" value="Yes" />
+  </form>
+  <form action="/{{ .Action }}/cancel" method="GET">
+    <input type="submit" class="secondary-button" value="No" />
+  </form>
+{{ end }}

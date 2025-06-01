@@ -1,5 +1,5 @@
 {{ define "body" }}
-{{ with index .Users 0 }}
+{{ with .User }}
 <h1>User Profile</h1>
 <form id="profileForm" method="GET" action="/profile/edit">
   <div class="button-group">
