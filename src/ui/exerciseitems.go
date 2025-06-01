@@ -98,6 +98,11 @@ func postExerciseItem(db *database.Database) http.HandlerFunc {
 			return
 		}
 
+		if err := r.ParseForm(); err != nil {
+			showError(w, "Failed to parse form: "+err.Error())
+			return
+		}
+
 		restTimeStr := r.FormValue("restTime")
 		if restTimeStr == "" {
 			showError(w, "Rest time is required")
@@ -111,11 +116,59 @@ func postExerciseItem(db *database.Database) http.HandlerFunc {
 		}
 
 		item.RestTime = uint(restTime)
+		item.Notes = r.FormValue("notes")
 
 		err = db.UpdateExerciseItem(item)
 		if err != nil {
 			showError(w, "Failed to update exercise item: "+err.Error())
 			return
+		}
+
+		for i, set := range item.Sets {
+			prefix := fmt.Sprintf("sets[%d]", i)
+
+			repsStr := r.FormValue(prefix + "[reps]")
+			if repsStr != "" {
+				reps, err := strconv.Atoi(repsStr)
+				if err != nil {
+					showError(w, fmt.Sprintf("Invalid reps for set %d: %v", i+1, err))
+					return
+				}
+				uReps := uint(reps)
+				set.Reps = &uReps
+			} else {
+				set.Reps = nil
+			}
+
+			weightStr := r.FormValue(prefix + "[weight]")
+			if weightStr != "" {
+				weight, err := strconv.ParseFloat(weightStr, 64)
+				if err != nil {
+					showError(w, fmt.Sprintf("Invalid weight for set %d: %v", i+1, err))
+					return
+				}
+				set.Weight = &weight
+			} else {
+				set.Weight = nil
+			}
+
+			durationStr := r.FormValue(prefix + "[duration]")
+			if durationStr != "" {
+				duration, err := strconv.Atoi(durationStr)
+				if err != nil {
+					showError(w, fmt.Sprintf("Invalid duration for set %d: %v", i+1, err))
+					return
+				}
+				uDuration := uint(duration)
+				set.Duration = &uDuration
+			} else {
+				set.Duration = nil
+			}
+
+			if err := db.UpdateSet(&set); err != nil {
+				showError(w, fmt.Sprintf("Failed to update set %d: %v", i+1, err))
+				return
+			}
 		}
 
 		redirect(w, r, fmt.Sprintf("/routines/%d", item.RoutineItem.RoutineID))

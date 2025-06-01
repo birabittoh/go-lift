@@ -98,9 +98,8 @@ func InitServeMux(s *http.ServeMux, db *database.Database) {
 	s.HandleFunc("POST /routines/{id}/delete", postRoutineDelete(db))            // delete routine
 	s.HandleFunc("POST /routines/{id}/new", postRoutineItemNew(db))              // add new routine item to routine
 	s.HandleFunc("POST /exercise-items/{id}/delete", postExerciseItemDelete(db)) // delete exercise item
-	s.HandleFunc("POST /exercise-items/{id}", postExerciseItem(db))              // edit exercise item (restTime)
+	s.HandleFunc("POST /exercise-items/{id}", postExerciseItem(db))              // edit exercise item (restTime, sets)
 	s.HandleFunc("POST /exercise-items/{id}/new", postSetNew(db))                // add new set to exercise item
-	s.HandleFunc("POST /sets/{id}", postSet(db))                                 // edit set (reps, weight, duration)
 	s.HandleFunc("POST /sets/{id}/delete", postSetDelete(db))                    // delete set
 	s.HandleFunc("POST /profile/edit", postProfileEdit(db))                      // edit user profile
 
