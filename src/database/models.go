@@ -18,7 +18,7 @@ type Database struct {
 // Day model represents a week day
 type Day struct {
 	ID   uint   `gorm:"primaryKey" json:"id"`
-	Name string `gorm:"size:10;not null;uniqueIndex" json:"name"` // e.g., "Monday"
+	Name string `gorm:"size:10;not null;uniqueIndex" json:"name"`
 }
 
 // User model - kept as is since it's not directly related to routines
@@ -116,7 +116,6 @@ type Set struct {
 	Reps           *uint     `json:"reps"`
 	Weight         *float64  `json:"weight"`
 	Duration       *uint     `json:"duration"` // In seconds
-	OrderIndex     int       `gorm:"not null;default:0" json:"orderIndex"`
 	CreatedAt      time.Time `json:"createdAt"`
 	UpdatedAt      time.Time `json:"updatedAt"`
 

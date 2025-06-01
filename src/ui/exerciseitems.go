@@ -79,6 +79,74 @@ func postExerciseItemDelete(db *database.Database) http.HandlerFunc {
 	}
 }
 
+func postExerciseItemUp(db *database.Database) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		itemID, err := g.GetIDFromPath(r)
+		if err != nil {
+			showError(w, "Invalid exercise item ID: "+err.Error())
+			return
+		}
+
+		item, err := db.GetExerciseItemByID(itemID)
+		if err != nil {
+			showError(w, "Exercise item not found")
+			return
+		}
+
+		if item.OrderIndex == 0 {
+			showError(w, "Cannot move the first exercise item up")
+			return
+		}
+
+		err = db.MoveExerciseItem(item, true) // true for moving up
+		if err != nil {
+			showError(w, "Failed to move exercise item up: "+err.Error())
+			return
+		}
+
+		redirect(w, r, fmt.Sprintf("/routines/%d", item.RoutineItem.RoutineID))
+	}
+}
+
+func postExerciseItemDown(db *database.Database) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		itemID, err := g.GetIDFromPath(r)
+		if err != nil {
+			showError(w, "Invalid exercise item ID: "+err.Error())
+			return
+		}
+
+		item, err := db.GetExerciseItemByID(itemID)
+		if err != nil {
+			showError(w, "Exercise item not found")
+			return
+		}
+
+		if item.OrderIndex == len(item.RoutineItem.ExerciseItems)-1 {
+			showError(w, "Cannot move the last exercise item down")
+			return
+		}
+
+		err = db.MoveExerciseItem(item, false) // false for moving down
+		if err != nil {
+			showError(w, "Failed to move exercise item down: "+err.Error())
+			return
+		}
+
+		redirect(w, r, fmt.Sprintf("/routines/%d", item.RoutineItem.RoutineID))
+	}
+}
+
 func postExerciseItem(db *database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {

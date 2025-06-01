@@ -292,9 +292,11 @@ input[type="time"] {
   gap: 5px;
   margin: 15px 0;
 }
+
 .day-checkbox {
   display: none;
 }
+
 .day-label {
   display: flex;
   justify-content: center;
@@ -308,12 +310,14 @@ input[type="time"] {
   text-transform: uppercase;
   padding: 5px 10px;
 }
+
 .day-label strong {
   font-size: 14px;
   max-width: 3ch;
   overflow: hidden;
 }
-.day-checkbox:checked + .day-label {
+
+.day-checkbox:checked+.day-label {
   background-color: var(--nav-active);
   color: white;
 }
@@ -325,18 +329,32 @@ input[type="time"] {
   width: 100%;
 }
 
+.exercise-actions {
+  display: flex;
+  align-items: center;
+  flex-direction: row-reverse;
+}
+
+.routine-item-actions {
+  display: flex;
+  flex-direction: row-reverse;
+  margin-top: 16px;
+}
+
 input[type="number"] {
   -webkit-appearance: textfield;
-     -moz-appearance: textfield;
-          appearance: textfield;
+  -moz-appearance: textfield;
+  appearance: textfield;
 }
-input[type=number]::-webkit-inner-spin-button, 
-input[type=number]::-webkit-outer-spin-button { 
+
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
   -webkit-appearance: none;
 }
 
+@media (max-width: 768px) {
 
-@media (max-width: 768px) { /* Mobile only */
+  /* Mobile only */
   .sidebar {
     position: fixed;
     bottom: 0;
@@ -374,24 +392,13 @@ input[type=number]::-webkit-outer-spin-button {
     padding: 5px !important;
   }
 
-  @media (min-width: 769px) { /* Desktop only */
-    .sidebar {
-      width: 220px;
-      min-height: 100vh;
-      box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-    }
-
-    .nav-link {
-      padding: 12px 24px;
-    }
-  }
-
   .routine-items-container {
     margin: 24px 0;
   }
 
   .exercise-items-list {
     margin-top: 12px;
+    flex-direction: column;
   }
 
   .exercise-details {
@@ -404,13 +411,24 @@ input[type=number]::-webkit-outer-spin-button {
     font-style: italic;
   }
 
-  .add-form {
-    margin-top: 16px;
-  }
-
   .set-table {
     width: 100%;
     border-collapse: collapse;
     margin: 10px 0;
+  }
+
+}
+
+@media (min-width: 769px) {
+
+  /* Desktop only */
+  .sidebar {
+    width: 220px;
+    min-height: 100vh;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  }
+
+  .nav-link {
+    padding: 12px 24px;
   }
 }

@@ -112,6 +112,28 @@ func (db *Database) GetRoutines() ([]Routine, error) {
 	return routines, nil
 }
 
+func sortRoutineItems(r *Routine) {
+	// sort routine.RoutineItems by OrderIndex
+	for i := range r.RoutineItems {
+		for j := i + 1; j < len(r.RoutineItems); j++ {
+			if r.RoutineItems[i].OrderIndex > r.RoutineItems[j].OrderIndex {
+				r.RoutineItems[i], r.RoutineItems[j] = r.RoutineItems[j], r.RoutineItems[i]
+			}
+		}
+	}
+}
+
+func sortExerciseItems(r *RoutineItem) {
+	// sort ExerciseItems by OrderIndex
+	for i := range r.ExerciseItems {
+		for j := i + 1; j < len(r.ExerciseItems); j++ {
+			if r.ExerciseItems[i].OrderIndex > r.ExerciseItems[j].OrderIndex {
+				r.ExerciseItems[i], r.ExerciseItems[j] = r.ExerciseItems[j], r.ExerciseItems[i]
+			}
+		}
+	}
+}
+
 func (db *Database) GetRoutineByID(id uint) (*Routine, error) {
 	var routine Routine
 	err := db.
@@ -123,6 +145,11 @@ func (db *Database) GetRoutineByID(id uint) (*Routine, error) {
 		First(&routine, id).Error
 	if err != nil {
 		return nil, err
+	}
+
+	sortRoutineItems(&routine)
+	for i := range routine.RoutineItems {
+		sortExerciseItems(&routine.RoutineItems[i])
 	}
 
 	return &routine, nil
@@ -199,10 +226,14 @@ func (db *Database) GetRoutineItemByID(id uint) (*RoutineItem, error) {
 	err := db.
 		Preload("ExerciseItems").
 		Preload("ExerciseItems.Exercise").
+		Preload("ExerciseItems.Sets").
+		Preload("Routine").
 		First(&item, id).Error
 	if err != nil {
 		return nil, err
 	}
+
+	sortExerciseItems(&item)
 
 	return &item, nil
 }
@@ -276,6 +307,106 @@ func (db *Database) GetExerciseItemByID(id uint) (*ExerciseItem, error) {
 	return &item, nil
 }
 
+func (db *Database) MoveExerciseItem(item *ExerciseItem, up bool) error {
+	if item.ID == 0 {
+		return fmt.Errorf("exercise item ID is required for move")
+	}
+
+	routineItem, err := db.GetRoutineItemByID(item.RoutineItemID)
+	if err != nil {
+		return fmt.Errorf("failed to retrieve routine item: %w", err)
+	}
+
+	var newIndex int
+
+	if up {
+		if item.OrderIndex == 0 {
+			return fmt.Errorf("cannot move exercise item up, already at top")
+		}
+
+		newIndex = item.OrderIndex - 1
+	} else {
+		if item.OrderIndex >= len(routineItem.ExerciseItems)-1 {
+			return fmt.Errorf("cannot move exercise item down, already at bottom")
+		}
+
+		newIndex = item.OrderIndex + 1
+	}
+
+	var prevItem *ExerciseItem
+	for _, ei := range routineItem.ExerciseItems {
+		if ei.OrderIndex == newIndex {
+			prevItem = &ei
+			break
+		}
+	}
+	if prevItem == nil {
+		return fmt.Errorf("previous exercise item not found for move up")
+	}
+
+	prevItem.OrderIndex = item.OrderIndex
+	if err := db.UpdateExerciseItem(prevItem); err != nil {
+		return fmt.Errorf("failed to update previous exercise item order index: %w", err)
+	}
+
+	item.OrderIndex = newIndex
+	if err := db.UpdateExerciseItem(item); err != nil {
+		return fmt.Errorf("failed to update current exercise item order index: %w", err)
+	}
+
+	return nil
+}
+
+func (db *Database) MoveRoutineItem(item *RoutineItem, up bool) error {
+	if item.ID == 0 {
+		return fmt.Errorf("routine item ID is required for move")
+	}
+
+	routine, err := db.GetRoutineByID(item.RoutineID)
+	if err != nil {
+		return fmt.Errorf("failed to retrieve routine: %w", err)
+	}
+
+	var newIndex int
+
+	if up {
+		if item.OrderIndex == 0 {
+			return fmt.Errorf("cannot move routine item up, already at top")
+		}
+
+		newIndex = item.OrderIndex - 1
+	} else {
+		if item.OrderIndex >= len(routine.RoutineItems)-1 {
+			return fmt.Errorf("cannot move routine item down, already at bottom")
+		}
+
+		newIndex = item.OrderIndex + 1
+	}
+
+	var prevItem *RoutineItem
+	for _, ei := range routine.RoutineItems {
+		if ei.OrderIndex == newIndex {
+			prevItem = &ei
+			break
+		}
+	}
+	if prevItem == nil {
+		return fmt.Errorf("previous routine item not found for move up")
+	}
+
+	prevItem.OrderIndex = item.OrderIndex
+	if err := db.UpdateRoutineItem(prevItem); err != nil {
+		return fmt.Errorf("failed to update previous routine item order index: %w", err)
+	}
+
+	item.OrderIndex = newIndex
+	if err := db.UpdateRoutineItem(item); err != nil {
+		return fmt.Errorf("failed to update current routine item order index: %w", err)
+	}
+
+	return nil
+}
+
 func (db *Database) AddExerciseToRoutineItem(routineItem *RoutineItem, exercise *Exercise) (*ExerciseItem, error) {
 	item := &ExerciseItem{
 		RoutineItemID: routineItem.ID,
@@ -316,17 +447,25 @@ func (db *Database) UpdateExerciseItem(item *ExerciseItem) error {
 	return nil
 }
 
+func (db *Database) UpdateRoutineItem(item *RoutineItem) error {
+	if item.ID == 0 {
+		return fmt.Errorf("routine item ID is required for update")
+	}
+
+	if err := db.Save(item).Error; err != nil {
+		return fmt.Errorf("failed to update routine item: %w", err)
+	}
+
+	return nil
+}
+
 func (db *Database) NewSet(item *ExerciseItem) (*Set, error) {
 	if item.ID == 0 {
 		return nil, fmt.Errorf("exercise item ID is required for new set")
 	}
 
 	l := len(item.Sets)
-
-	set := &Set{
-		ExerciseItemID: item.ID,
-		OrderIndex:     l,
-	}
+	set := &Set{ExerciseItemID: item.ID}
 
 	if l > 0 {
 		lastSet := item.Sets[l-1]

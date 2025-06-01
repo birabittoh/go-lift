@@ -35,6 +35,7 @@ var (
 		"formatBirthDate": formatBirthDate,
 		"formatDay":       formatDay,
 		"isChecked":       isChecked,
+		"sum":             func(a, b int) int { return a + b },
 	}
 )
 
@@ -97,6 +98,10 @@ func InitServeMux(s *http.ServeMux, db *database.Database) {
 	s.HandleFunc("POST /routines/{id}", postRoutine(db))                         // edit routine (name, description)
 	s.HandleFunc("POST /routines/{id}/delete", postRoutineDelete(db))            // delete routine
 	s.HandleFunc("POST /routines/{id}/new", postRoutineItemNew(db))              // add new routine item to routine
+	s.HandleFunc("POST /exercise-items/{id}/up", postExerciseItemUp(db))         // move exercise item up
+	s.HandleFunc("POST /exercise-items/{id}/down", postExerciseItemDown(db))     // move exercise item down
+	s.HandleFunc("POST /routine-items/{id}/up", postRoutineItemUp(db))           // move routine item up
+	s.HandleFunc("POST /routine-items/{id}/down", postRoutineItemDown(db))       // move routine item down
 	s.HandleFunc("POST /exercise-items/{id}/delete", postExerciseItemDelete(db)) // delete exercise item
 	s.HandleFunc("POST /exercise-items/{id}", postExerciseItem(db))              // edit exercise item (restTime, sets)
 	s.HandleFunc("POST /exercise-items/{id}/new", postSetNew(db))                // add new set to exercise item

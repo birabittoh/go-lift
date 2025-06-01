@@ -24,75 +24,95 @@
 </form>
 {{ if .RoutineItems }}
 <div class="routine-items-container">
-  {{ range .RoutineItems }}
+  {{ range $routineItem := .RoutineItems }}
   <div class="routine-item">
     {{ if .ExerciseItems }}
     <div class="exercise-items-list">
       {{ range .ExerciseItems }}
-  <div class="exercise-item">
-    <div class="exercise-details" style="width: 100%;">
-      <h3 class="exercise-name">{{ .Exercise.Name }}</h3>
-      <form action="/exercise-items/{{ .ID }}" method="POST" class="exercise-item-form">
-        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-          <input type="text" id="notes" name="notes" value="{{ .Notes }}" placeholder="Notes..." class="set-input" style="flex: 1;">
-          <label for="restTime">Rest (s):</label>
-          <input type="number" id="restTime" name="restTime" value="{{ .RestTime }}" min="0" max="3600" class="set-input" style="width: 60px;">
+      <div class="exercise-item">
+        <div class="exercise-details" style="width: 100%;">
+          <h3 class="exercise-name">{{ .Exercise.Name }}</h3>
+          <form action="/exercise-items/{{ .ID }}" method="POST" class="exercise-item-form">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+              <input type="text" id="notes" name="notes" value="{{ .Notes }}" placeholder="Notes..." class="set-input" style="flex: 1;">
+              <label for="restTime">Rest (s):</label>
+              <input type="number" id="restTime" name="restTime" value="{{ .RestTime }}" min="0" max="3600" class="set-input" style="width: 60px;">
+            </div>
+            <div class="exercise-sets">
+              <table class="set-table">
+                <thead>
+                  <tr>
+                    <th>reps</th>
+                    <th>kg</th>
+                    <th>s</th>
+                    <th colspan="2">actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr style="display: none;"><form action="/sets/0/delete" method="POST"></form></tr><!-- Fixes nested forms -->
+                  {{ range $index, $set := .Sets }}
+                  <tr>
+                    <td><input type="number" name="sets[{{ $index }}][reps]" value="{{ $set.Reps }}" min="1" max="99" placeholder="Reps" class="set-input"></td>
+                    <td><input type="number" step="0.5" name="sets[{{ $index }}][weight]" value="{{ $set.Weight }}" min="1" max="300" placeholder="Weight" class="set-input"></td>
+                    <td><input type="number" name="sets[{{ $index }}][duration]" value="{{ $set.Duration }}" min="1" max="7200" placeholder="Duration" class="set-input"></td>
+                    <td class="set-actions" style="text-align: right;">
+                      <form action="/sets/{{ $set.ID }}/delete" method="POST" class="delete-form" style="display: inline;">
+                        <button type="submit" class="delete-button">🗑️</button>
+                      </form>
+                    </td>
+                  </tr>
+                  {{ end }}
+                  <tr>
+                    <td colspan="5">
+                      <form action="/exercise-items/{{ .ID }}/new" method="POST" class="form-group add-set-form" style="margin: 0;">
+                        <input type="submit" class="secondary-button" value="New set" />
+                      </form>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div style="margin-top: 12px;" class="form-group">
+              <input type="submit" class="primary-button" value="Save" />
+            </div>
+          </form>
         </div>
-
-        <div class="exercise-sets">
-          <table class="set-table">
-            <thead>
-              <tr>
-                <th>reps</th>
-                <th>kg</th>
-                <th>s</th>
-                <th colspan="2">actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr style="display: none;"><form action="/sets/0/delete" method="POST"></form></tr><!-- Fixes nested forms -->
-              {{ range $index, $set := .Sets }}
-              <tr>
-                <td><input type="number" name="sets[{{ $index }}][reps]" value="{{ $set.Reps }}" min="1" max="99" placeholder="Reps" class="set-input"></td>
-                <td><input type="number" step="0.5" name="sets[{{ $index }}][weight]" value="{{ $set.Weight }}" min="1" max="300" placeholder="Weight" class="set-input"></td>
-                <td><input type="number" name="sets[{{ $index }}][duration]" value="{{ $set.Duration }}" min="1" max="7200" placeholder="Duration" class="set-input"></td>
-                <td class="set-actions" style="text-align: right;">
-                  <form action="/sets/{{ $set.ID }}/delete" method="POST" class="delete-form" style="display: inline;">
-                    <button type="submit" class="delete-button">🗑️</button>
-                  </form>
-                </td>
-              </tr>
-              {{ end }}
-              <tr>
-                <td colspan="5">
-                  <form action="/exercise-items/{{ .ID }}/new" method="POST" class="form-group add-set-form" style="margin: 0;">
-                    <input type="submit" class="secondary-button" value="New set" />
-                  </form>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <div class="exercise-actions" style="margin-top: 8px;">
+          <form action="/exercise-items/{{ .ID }}/delete" method="POST" class="delete-form">
+            <input type="submit" value="🗑️" class="delete-button">
+          </form>
+          {{ if ne .OrderIndex 0 }}
+          <form action="/exercise-items/{{ .ID }}/up" method="POST">
+            <input type="submit" value="🔺" class="primary-button">
+          </form>
+          {{ end }}
+          {{ if not (eq .OrderIndex (sum (len $routineItem.ExerciseItems) -1)) }}
+          <form action="/exercise-items/{{ .ID }}/down" method="POST">
+            <input type="submit" value="🔻" class="primary-button">
+          </form>
+          {{ end }}
         </div>
-
-        <div style="margin-top: 12px;" class="form-group">
-          <input type="submit" class="primary-button" value="Save" />
-        </div>
-      </form>
-    </div>
-
-    <form action="/exercise-items/{{ .ID }}/delete" method="POST" class="delete-form" style="margin-top: 8px;">
-      <input type="submit" value="🗑️" class="delete-button">
-    </form>
-  </div>
-{{ end }}
+      </div>
+    {{ end }}
     </div>
     {{ else }}
     <p class="empty-message">No exercises in this item.</p>
     {{ end }}
-    
-    <form action="/exercises/{{ .ID }}" method="GET" class="add-form">
-      <input type="submit" value="Add exercise (superset)" class="secondary-button">
-    </form>
+    <div class="routine-item-actions">
+      <form action="/exercises/{{ .ID }}" method="GET" class="add-form">
+        <input type="submit" value="Add exercise (superset)" class="secondary-button">
+      </form>
+      {{ if ne .OrderIndex 0 }}
+      <form action="/routine-items/{{ .ID }}/up" method="POST">
+        <input type="submit" value="🔺" class="secondary-button">
+      </form>
+      {{ end }}
+      {{ if not (eq .OrderIndex (sum (len (index $.Routines 0).RoutineItems) -1)) }}
+      <form action="/routine-items/{{ .ID }}/down" method="POST">
+        <input type="submit" value="🔻" class="secondary-button">
+      </form>
+      {{ end }}
+    </div>
   </div>
   {{ end }}
 </div>
