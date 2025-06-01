@@ -10,16 +10,22 @@
     {{ range .Routines }}
     <div class="routine-item">
       <div>
-        <h5 class="routine-name">{{ .Name }}</h5>
-        <p class="routine-description">{{ .Description }}</p>
-        <div class="button-group" style="display: flex;">
-          <form action="/routines/{{ .ID }}" method="GET">
-            <input class="primary-button" type="submit" value="📝" />
-          </form>
-          <form action="/routines/{{ .ID }}/delete" method="POST">
-            <input class="error-button" type="submit" value="🗑️" />
-          </form>
-        </div>
+        <h3 class="routine-name">{{ .Name }}</h3>
+        <h4 class="routine-description">{{ .Description }}</h4>
+        {{ if .Days }}
+        <p class="routine-days"><i>{{ range .Days }}{{ formatDay .Name }} {{ end }}</i></p>
+        {{ end }}
+      </div>
+      <div class="button-group" style="display: flex;">
+        <form action="/routines/{{ .ID }}/start" method="GET">
+          <input class="primary-button" type="submit" value="🏋️‍♂️" />
+        </form>
+        <form action="/routines/{{ .ID }}" method="GET">
+          <input class="primary-button" type="submit" value="📝" />
+        </form>
+        <form action="/routines/{{ .ID }}/delete" method="POST">
+          <input class="delete-button" type="submit" value="🗑️" />
+        </form>
       </div>
     </div>
     {{ end }}

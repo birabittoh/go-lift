@@ -6,7 +6,6 @@
     <tr>
       <td>Name</td>
       <td>Muscles</td>
-      <td>Force</td>
       <td>Category</td>
       <td>Actions</td>
     </tr>
@@ -16,7 +15,6 @@
     <tr>
       <td>{{ .Name }}</td>
       <td>{{ .PrimaryMuscles }}</td>
-      <td>{{ coalesce .Force "-" }}</td>
       <td>{{ .Category }}</td>
       <td>
         <form method="GET" action="/exercises/{{ $.ID }}/{{ .ID }}">
